@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进化辅助神器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入lz-string库用于处理LZ-string格式 -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        neutral: '#f1f5f9',
+                        developer: '#e11d48',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .text-wrap-pre {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+            }
+            .clickable-author {
+                cursor: pointer;
+                text-decoration: underline;
+                text-underline-offset: 2px;
+            }
+            .clickable-author:hover {
+                color: #3b82f6;
+            }
+            .developer-badge {
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                padding: 0.25rem 0.75rem;
+                border-radius: 999px;
+                font-size: 0.875rem;
+                font-weight: 600;
+            }
+            .random-seed-value {
+                font-family: monospace;
+                padding: 0 4px;
+                border-radius: 3px;
+                background-color: #f1f5f9;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen relative">
+    <!-- 开发者模式标识 - 默认隐藏 -->
+    <div id="developerBadge" class="developer-badge bg-developer text-white hidden">
+        开发者模式
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <header class="mb-8 text-center">
+            <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-gray-800 mb-2">进化辅助神器</h1>
+            <p class="text-gray-600">作者：<span id="authorName" class="clickable-author">zhenzitou</span></p>
+            
+            <!-- 开发者密码输入区域 - 默认隐藏 -->
+            <div id="developerLogin" class="mt-4 hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-2 max-w-md mx-auto">
+                    <input 
+                        type="password" 
+                        id="passwordInput" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                        placeholder="输入开发者密码"
+                    >
+                    <button id="confirmPassword" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300 whitespace-nowrap">
+                        确认
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+            <div class="space-y-6">
+                <!-- 输入区域 -->
+                <div>
+                    <label for="inputString" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-input-text mr-2 text-primary"></i>原存档
+                    </label>
+                    <textarea 
+                        id="inputString" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300 min-h-[120px] resize-y"
+                        placeholder='请输入存档字符串...'
+                    ></textarea>
+                    <!-- 纯文本复选框 - 仅在开发者模式显示 -->
+                    <div id="inputPlainTextContainer" class="flex items-center mt-2 hidden">
+                        <input 
+                            type="checkbox" 
+                            id="inputPlainText" 
+                            class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                        >
+                        <label for="inputPlainText" class="ml-2 block text-sm text-gray-700">
+                            纯文本
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 复选框控制区域 -->
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="replaceCheckbox" 
+                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                            checked  <!-- 默认勾选 -->
+                        >
+                        <label for="replaceCheckbox" class="ml-2 block text-sm text-gray-700">
+                            充满2倍速
+                        </label>
+                        
+                        <!-- 开发者模式下的数字输入区域 -->
+                        <div id="customValueContainer" class="ml-4 hidden items-center">
+                            <label for="customCurrentValue" class="text-sm text-gray-700 mr-2">替换值:</label>
+                            <input 
+                                type="number" 
+                                id="customCurrentValue" 
+                                class="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                value="0" 
+                                min="0"
+                            >
+                        </div>
+                    </div>
+                    
+                    <!-- 新增的设置种子复选框及输入区域 -->
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="seedCheckbox" 
+                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                        >
+                        <label for="seedCheckbox" class="ml-2 block text-sm text-gray-700">
+                            设置种子
+                        </label>
+                        
+                        <!-- 种子数字输入区域 -->
+                        <div id="seedValueContainer" class="ml-4 hidden items-center">
+                            <label for="seedValue" class="text-sm text-gray-700 mr-2">种子值:</label>
+                            <input 
+                                type="number" 
+                                id="seedValue" 
+                                class="w-24 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                                value="0" 
+                                min="0"
+                            >
+                        </div>
+                    </div>
+                    
+                    <!-- 随机设置种子复选框 -->
+                    <div class="flex items-center ml-7" id="randomSeedContainer" style="display: none;">
+                        <input 
+                            type="checkbox" 
+                            id="randomSeedCheckbox" 
+                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                        >
+                        <label for="randomSeedCheckbox" class="ml-2 block text-sm text-gray-700">
+                            随机设置种子
+                        </label>
+                        
+                        <!-- 显示当前随机种子值 -->
+                        <span id="currentRandomSeed" class="ml-3 text-sm hidden">
+                            随机值: <span class="random-seed-value">0</span>
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="unbeatableCheckbox" 
+                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                            checked  <!-- 默认勾选 -->
+                        >
+                        <label for="unbeatableCheckbox" class="ml-2 block text-sm text-gray-700">
+                            马晓天是不可战胜的
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 按钮区域 -->
+                <div class="flex justify-center">
+                    <button 
+                        id="processBtn" 
+                        class="bg-primary hover:bg-primary/90 text-white font-medium px-6 py-3 rounded-lg shadow-md hover:shadow-lg transition-all-300 flex items-center"
+                    >
+                        <i class="fa fa-magic mr-2"></i>操作
+                    </button>
+                </div>
+
+                <!-- 输出区域 -->
+                <div>
+                    <label for="outputString" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fa fa-output-text mr-2 text-green-500"></i>新存档
+                    </label>
+                    <textarea 
+                        id="outputString" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300 min-h-[120px] resize-y"
+                        readonly
+                    ></textarea>
+                    <!-- 纯文本复选框 - 仅在开发者模式显示 -->
+                    <div id="outputPlainTextContainer" class="flex items-center mt-2 hidden">
+                        <input 
+                            type="checkbox" 
+                            id="outputPlainText" 
+                            class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary transition-all-300"
+                        >
+                        <label for="outputPlainText" class="ml-2 block text-sm text-gray-700">
+                            纯文本
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 调试信息区域 (可折叠) - 仅在开发者模式显示 -->
+                <div id="debugSection" class="border border-gray-200 rounded-lg overflow-hidden hidden">
+                    <button id="toggleDebug" class="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-all-300 flex justify-between items-center">
+                        <span class="text-sm font-medium text-gray-700">调试信息</span>
+                        <i class="fa fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                    </button>
+                    <div id="debugInfo" class="hidden p-4 bg-gray-50 text-sm space-y-4">
+                        <div>
+                            <label class="block text-gray-600 mb-1">解压后的原始字符串:</label>
+                            <textarea id="decodedInput" class="w-full p-2 border border-gray-200 rounded bg-white min-h-[80px] text-wrap-pre" readonly></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-600 mb-1">处理后的原始字符串:</label>
+                            <textarea id="processedString" class="w-full p-2 border border-gray-200 rounded bg-white min-h-[80px] text-wrap-pre" readonly></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-600 mb-1">处理日志:</label>
+                            <div id="debugLog" class="text-gray-600 font-mono p-2 border border-gray-200 rounded bg-white min-h-[80px] text-wrap-pre"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状态提示区域 -->
+                <div id="statusMessage" class="hidden p-3 rounded-lg text-sm"></div>
+            </div>
+        </main>
+
+        <footer class="mt-8 text-center text-gray-500 text-sm">
+            <p>工具功能：处理存档字符串，支持替换最大current值和设置种子值（包括随机种子）</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局状态变量 - 默认是非开发者模式
+        let isDeveloperMode = false;
+        // 当前随机种子值
+        let currentRandomSeedValue = 0;
+        
+        // 生成1~250000之间的随机整数
+        function generateRandomSeed() {
+            return Math.floor(Math.random() * 250000) + 1;
+        }
+        
+        // 更新随机种子显示
+        function updateRandomSeedDisplay() {
+            const randomSeedCheckbox = document.getElementById('randomSeedCheckbox');
+            const currentRandomSeed = document.getElementById('currentRandomSeed');
+            const seedValueContainer = document.getElementById('seedValueContainer');
+            
+            if (randomSeedCheckbox.checked) {
+                // 生成新的随机值
+                currentRandomSeedValue = generateRandomSeed();
+                // 显示随机值
+                currentRandomSeed.classList.remove('hidden');
+                currentRandomSeed.querySelector('.random-seed-value').textContent = currentRandomSeedValue;
+                // 隐藏手动输入框
+                seedValueContainer.classList.add('hidden');
+                seedValueContainer.classList.remove('flex');
+            } else {
+                // 隐藏随机值显示
+                currentRandomSeed.classList.add('hidden');
+                // 显示手动输入框（如果设置种子勾选）
+                if (document.getElementById('seedCheckbox').checked) {
+                    seedValueContainer.classList.remove('hidden');
+                    seedValueContainer.classList.add('flex');
+                }
+            }
+        }
+        
+        // 标准化换行符函数
+        function normalizeLineBreaks(str) {
+            if (!str) return '';
+            return str.replace(/\r\n|\r|\n/g, '\n');
+        }
+
+        // 处理函数 - 替换最大的current值为指定数字
+        function replaceMaxCurrent(a, replaceValue = 0) {
+            const debugLog = [];
+            debugLog.push(`开始查找current值，准备替换为: ${replaceValue}`);
+            
+            // 正则表达式匹配 "current": 后面的数字（包括整数和浮点数）
+            const regex = /"current":\s*(\d+\.?\d*)/g;
+            let matches = [];
+            let match;
+            
+            // 找出所有"current":后面的数字及其位置
+            while ((match = regex.exec(a)) !== null) {
+                const number = parseFloat(match[1]);
+                const matchStr = match[0];
+                matches.push({
+                    index: match.index,       // 匹配的起始位置
+                    length: matchStr.length,  // 匹配的长度
+                    value: number,            // 提取的数字值
+                    original: matchStr        // 原始匹配字符串
+                });
+                debugLog.push(`找到匹配: "${matchStr}"，值为: ${number}，位置: ${match.index}`);
+            }
+            
+            // 如果没有找到匹配项，直接返回原字符串
+            if (matches.length === 0) {
+                debugLog.push("未找到任何current值");
+                return {
+                    result: a,
+                    replaced: false,
+                    log: debugLog
+                };
+            }
+            
+            // 找到数值最大的那个匹配项
+            let maxMatch = matches.reduce((max, current) => {
+                return current.value > max.value ? current : max;
+            }, matches[0]);
+            
+            debugLog.push(`最大的current值是: ${maxMatch.value}，位于: ${maxMatch.index}`);
+            debugLog.push(`原始内容: "${maxMatch.original}"`);
+            
+            // 替换最大的数字为指定值
+            const result = a.substring(0, maxMatch.index) + 
+                          `"current": ${replaceValue}` + 
+                          a.substring(maxMatch.index + maxMatch.length);
+                          
+            debugLog.push(`替换完成，替换为: ${replaceValue}`);
+            
+            return {
+                result: result,
+                replaced: true,
+                log: debugLog
+            };
+        }
+
+        // 处理函数 - 替换seed值为指定数字
+        function replaceSeedValue(a, seedValue) {
+            const debugLog = [];
+            debugLog.push(`开始查找seed值，准备替换为: ${seedValue}`);
+            
+            // 正则表达式匹配 "seed": 后面的数字（仅匹配整数）
+            const regex = /"seed":\s*(\d+)/;
+            const match = a.match(regex);
+            
+            if (!match) {
+                debugLog.push("未找到seed值");
+                return {
+                    result: a,
+                    replaced: false,
+                    log: debugLog
+                };
+            }
+            
+            const originalValue = match[1];
+            debugLog.push(`找到seed值: ${originalValue}`);
+            
+            // 替换seed值为指定值
+            const result = a.replace(regex, `"seed": ${seedValue}`);
+            debugLog.push(`seed值替换完成，从 ${originalValue} 替换为 ${seedValue}`);
+            
+            return {
+                result: result,
+                replaced: true,
+                log: debugLog
+            };
+        }
+
+        // 显示状态消息
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-amber-100', 'text-amber-800');
+            
+            if (isError) {
+                statusEl.classList.add('bg-red-100', 'text-red-800');
+            } else {
+                statusEl.classList.add('bg-green-100', 'text-green-800');
+            }
+            
+            // 3秒后自动隐藏状态消息
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 切换开发者模式
+        function toggleDeveloperMode(enable) {
+            isDeveloperMode = enable;
+            const debugSection = document.getElementById('debugSection');
+            const inputPlainTextContainer = document.getElementById('inputPlainTextContainer');
+            const outputPlainTextContainer = document.getElementById('outputPlainTextContainer');
+            const developerBadge = document.getElementById('developerBadge');
+            const customValueContainer = document.getElementById('customValueContainer');
+            
+            if (isDeveloperMode) {
+                // 显示开发者模式相关元素
+                debugSection.classList.remove('hidden');
+                inputPlainTextContainer.classList.remove('hidden');
+                outputPlainTextContainer.classList.remove('hidden');
+                developerBadge.classList.remove('hidden');
+                customValueContainer.classList.remove('hidden');
+                customValueContainer.classList.add('flex');
+                showStatus('已进入开发者模式');
+            } else {
+                // 隐藏开发者模式相关元素
+                debugSection.classList.add('hidden');
+                inputPlainTextContainer.classList.add('hidden');
+                outputPlainTextContainer.classList.add('hidden');
+                developerBadge.classList.add('hidden');
+                customValueContainer.classList.add('hidden');
+                customValueContainer.classList.remove('flex');
+                document.getElementById('debugInfo').classList.add('hidden');
+                showStatus('已退出开发者模式');
+            }
+        }
+
+        // 显示密码输入区域
+        function showPasswordInput() {
+            const developerLogin = document.getElementById('developerLogin');
+            const passwordInput = document.getElementById('passwordInput');
+            
+            developerLogin.classList.remove('hidden');
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+
+        // 隐藏密码输入区域
+        function hidePasswordInput() {
+            const developerLogin = document.getElementById('developerLogin');
+            developerLogin.classList.add('hidden');
+        }
+
+        // 验证密码并处理
+        function verifyPassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const password = passwordInput.value.trim();
+            
+            if (password === 'Password') {
+                hidePasswordInput(); // 验证成功后隐藏输入区域
+                toggleDeveloperMode(true);
+            } else {
+                showStatus('密码错误，请重新输入', true);
+                passwordInput.focus();
+                passwordInput.select();
+            }
+        }
+
+        // 页面交互
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputTextarea = document.getElementById('inputString');
+            const outputTextarea = document.getElementById('outputString');
+            const processBtn = document.getElementById('processBtn');
+            const replaceCheckbox = document.getElementById('replaceCheckbox');
+            const unbeatableCheckbox = document.getElementById('unbeatableCheckbox');
+            const authorName = document.getElementById('authorName');
+            const toggleDebugBtn = document.getElementById('toggleDebug');
+            const debugInfo = document.getElementById('debugInfo');
+            const decodedInput = document.getElementById('decodedInput');
+            const processedString = document.getElementById('processedString');
+            const debugLog = document.getElementById('debugLog');
+            const statusMessage = document.getElementById('statusMessage');
+            const inputPlainText = document.getElementById('inputPlainText');
+            const outputPlainText = document.getElementById('outputPlainText');
+            const passwordInput = document.getElementById('passwordInput');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const customCurrentValue = document.getElementById('customCurrentValue');
+            const seedCheckbox = document.getElementById('seedCheckbox');
+            const seedValueContainer = document.getElementById('seedValueContainer');
+            const seedValue = document.getElementById('seedValue');
+            const randomSeedContainer = document.getElementById('randomSeedContainer');
+            const randomSeedCheckbox = document.getElementById('randomSeedCheckbox');
+            const currentRandomSeed = document.getElementById('currentRandomSeed');
+
+            // 初始状态：非开发者模式，隐藏密码输入区域
+            toggleDeveloperMode(false);
+            hidePasswordInput();
+            
+            // 种子复选框状态变化事件
+            seedCheckbox.addEventListener('change', () => {
+                if (seedCheckbox.checked) {
+                    // 显示种子输入区域和随机种子选项
+                    seedValueContainer.classList.remove('hidden');
+                    seedValueContainer.classList.add('flex');
+                    randomSeedContainer.style.display = 'flex';
+                    
+                    // 如果之前随机种子是勾选状态，保持状态
+                    if (randomSeedCheckbox.checked) {
+                        updateRandomSeedDisplay();
+                    }
+                } else {
+                    // 隐藏相关区域
+                    seedValueContainer.classList.add('hidden');
+                    seedValueContainer.classList.remove('flex');
+                    randomSeedContainer.style.display = 'none';
+                    currentRandomSeed.classList.add('hidden');
+                }
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            // 随机种子复选框状态变化事件
+            randomSeedCheckbox.addEventListener('change', () => {
+                updateRandomSeedDisplay();
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+
+            // 作者名称点击事件 - 控制密码输入区域显示
+            authorName.addEventListener('click', () => {
+                // 检查"马晓天是不可战胜的"是否未勾选
+                const isUnbeatableUnchecked = !unbeatableCheckbox.checked;
+                
+                if (isDeveloperMode) {
+                    // 如果已在开发者模式，点击则退出
+                    toggleDeveloperMode(false);
+                } else if (isUnbeatableUnchecked) {
+                    // 仅当未勾选"马晓天是不可战胜的"且未在开发者模式时，才显示密码输入区域
+                    showPasswordInput();
+                }
+                // 其他情况不做任何操作
+            });
+
+            // 密码确认按钮事件
+            confirmPassword.addEventListener('click', verifyPassword);
+            
+            // 密码框按Enter键确认
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    verifyPassword();
+                }
+            });
+
+            // 切换调试信息显示
+            toggleDebugBtn.addEventListener('click', () => {
+                debugInfo.classList.toggle('hidden');
+                const icon = toggleDebugBtn.querySelector('i');
+                icon.classList.toggle('rotate-180');
+            });
+
+            // 处理按钮点击事件
+            processBtn.addEventListener('click', () => {
+                // 重置状态
+                statusMessage.classList.add('hidden');
+                outputTextarea.value = '';
+                
+                // 只有开发者模式才清空调试信息
+                if (isDeveloperMode) {
+                    decodedInput.value = '';
+                    processedString.value = '';
+                    debugLog.textContent = '';
+                }
+                
+                try {
+                    const inputStr = inputTextarea.value.trim();
+                    const shouldReplace = replaceCheckbox.checked;
+                    const shouldReplaceSeed = seedCheckbox.checked;
+                    const useRandomSeed = shouldReplaceSeed && randomSeedCheckbox.checked;
+                    const useInputPlainText = isDeveloperMode ? inputPlainText.checked : false;
+                    const useOutputPlainText = isDeveloperMode ? outputPlainText.checked : false;
+                    
+                    // 确定替换值：开发者模式下使用输入的数值，否则使用0
+                    const replaceValue = isDeveloperMode ? 
+                        (parseFloat(customCurrentValue.value) || 0) : 0;
+                    
+                    // 确定种子替换值 - 如果使用随机种子，生成新值
+                    let seedReplaceValue = 0;
+                    if (shouldReplaceSeed) {
+                        if (useRandomSeed) {
+                            // 生成新的随机种子值
+                            currentRandomSeedValue = generateRandomSeed();
+                            // 更新显示
+                            currentRandomSeed.querySelector('.random-seed-value').textContent = currentRandomSeedValue;
+                            seedReplaceValue = currentRandomSeedValue;
+                        } else {
+                            seedReplaceValue = parseInt(seedValue.value) || 0;
+                        }
+                    }
+                    
+                    if (!inputStr) {
+                        showStatus('请输入需要处理的存档字符串', true);
+                        return;
+                    }
+                    
+                    // 记录调试日志
+                    const logs = ["开始处理..."];
+                    logs.push(`输入字符串长度: ${inputStr.length}`);
+                    logs.push(`充满2倍速: ${shouldReplace}`);
+                    logs.push(`替换值: ${replaceValue}`);
+                    logs.push(`设置种子: ${shouldReplaceSeed}`);
+                    if (shouldReplaceSeed) {
+                        logs.push(`随机种子: ${useRandomSeed}`);
+                        logs.push(`种子值: ${seedReplaceValue}`);
+                    }
+                    if (isDeveloperMode) {
+                        logs.push(`纯文本输入: ${useInputPlainText}`);
+                        logs.push(`纯文本输出: ${useOutputPlainText}`);
+                    }
+                    
+                    // 处理输入字符串（根据纯文本选项决定是否解压）
+                    let originalString;
+                    try {
+                        if (useInputPlainText) {
+                            // 纯文本模式 - 直接使用输入内容
+                            originalString = inputStr;
+                            logs.push("使用纯文本输入模式");
+                        } else {
+                            // LZ-string模式 - 尝试解压
+                            originalString = LZString.decompressFromBase64(inputStr);
+                            
+                            // 如果失败，尝试其他解压方式
+                            if (!originalString) {
+                                logs.push("尝试使用decompressFromBase64失败，尝试decompress...");
+                                originalString = LZString.decompress(inputStr);
+                            }
+                            
+                            if (!originalString) {
+                                throw new Error('无法解压缩，请确认输入的是有效的字符串');
+                            }
+                            
+                            logs.push(`解压成功，原始字符串长度: ${originalString.length}`);
+                        }
+                        
+                        // 开发者模式下显示解压后的字符串
+                        if (isDeveloperMode) {
+                            const normalizedOriginal = normalizeLineBreaks(originalString);
+                            decodedInput.value = normalizedOriginal;
+                        }
+                    } catch (err) {
+                        if (isDeveloperMode) {
+                            logs.push("处理错误: " + err.message);
+                            debugLog.textContent = logs.join("\n");
+                        }
+                        showStatus('处理失败: ' + err.message, true);
+                        // 恢复按钮状态
+                        processBtn.classList.remove('bg-yellow-500');
+                        processBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>操作';
+                        return;
+                    }
+                    
+                    // 处理字符串
+                    let processedResult = originalString;
+                    
+                    // 先处理种子替换（如果勾选）
+                    if (shouldReplaceSeed) {
+                        const seedResult = replaceSeedValue(processedResult, seedReplaceValue);
+                        processedResult = seedResult.result;
+                        logs.push(...seedResult.log);
+                    }
+                    
+                    // 再处理current替换（如果勾选）
+                    if (shouldReplace) {
+                        const replaceResult = replaceMaxCurrent(processedResult, replaceValue);
+                        processedResult = replaceResult.result;
+                        logs.push(...replaceResult.log);
+                    }
+                    
+                    // 开发者模式下显示处理后的字符串
+                    if (isDeveloperMode) {
+                        const normalizedProcessed = normalizeLineBreaks(processedResult);
+                        processedString.value = normalizedProcessed;
+                    }
+                    
+                    // 准备输出（根据纯文本选项决定是否压缩）
+                    let outputStr;
+                    try {
+                        if (useOutputPlainText) {
+                            // 纯文本模式 - 直接输出处理结果
+                            outputStr = processedResult;
+                            logs.push("使用纯文本输出模式");
+                        } else {
+                            // LZ-string模式 - 压缩处理结果
+                            outputStr = LZString.compressToBase64(processedResult);
+                            logs.push(`压缩成功，输出字符串长度: ${outputStr.length}`);
+                        }
+                        
+                        outputTextarea.value = outputStr;
+                    } catch (err) {
+                        if (isDeveloperMode) {
+                            logs.push("压缩错误: " + err.message);
+                            debugLog.textContent = logs.join("\n");
+                        }
+                        showStatus('压缩失败: ' + err.message, true);
+                        // 恢复按钮状态
+                        processBtn.classList.remove('bg-yellow-500');
+                        processBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>操作';
+                        return;
+                    }
+                    
+                    // 开发者模式下显示日志
+                    if (isDeveloperMode) {
+                        logs.push("处理完成");
+                        debugLog.textContent = logs.join("\n");
+                    }
+                    
+                    // 构建状态消息
+                    let statusMsg = '操作完成';
+                    if (shouldReplaceSeed && shouldReplace) {
+                        if (useRandomSeed) {
+                            statusMsg += `，已随机设置种子为${seedReplaceValue}，替换current为${replaceValue}`;
+                        } else {
+                            statusMsg += `，已设置种子为${seedReplaceValue}，替换current为${replaceValue}`;
+                        }
+                    } else if (shouldReplaceSeed) {
+                        if (useRandomSeed) {
+                            statusMsg += `，已随机设置种子为${seedReplaceValue}`;
+                        } else {
+                            statusMsg += `，已设置种子为${seedReplaceValue}`;
+                        }
+                    } else if (shouldReplace) {
+                        statusMsg += `，已替换current为${replaceValue}`;
+                    } else {
+                        statusMsg = '未进行任何替换，操作完成';
+                    }
+                    showStatus(statusMsg);
+                    
+                    // 更新按钮显示为"已完成"
+                    processBtn.classList.add('bg-green-500');
+                    processBtn.innerHTML = '<i class="fa fa-check mr-2"></i>已完成';
+                    
+                    // 3秒后恢复按钮原始状态
+                    setTimeout(() => {
+                        processBtn.classList.remove('bg-green-500');
+                        processBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>操作';
+                    }, 3000);
+                    
+                } catch (err) {
+                    showStatus('处理失败: ' + err.message, true);
+                    console.error('处理错误:', err);
+                    if (isDeveloperMode) {
+                        debugLog.textContent = '处理错误: ' + err.message;
+                    }
+                    // 恢复按钮状态
+                    processBtn.classList.remove('bg-yellow-500');
+                    processBtn.innerHTML = '<i class="fa fa-magic mr-2"></i>操作';
+                }
+            });
+
+            // 输入时清除输出
+            inputTextarea.addEventListener('input', () => {
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            // 复选框变化时清除输出
+            replaceCheckbox.addEventListener('change', () => {
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            unbeatableCheckbox.addEventListener('change', () => {
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            // 自定义值变化时清除输出
+            customCurrentValue.addEventListener('change', () => {
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            seedValue.addEventListener('change', () => {
+                outputTextarea.value = '';
+                statusMessage.classList.add('hidden');
+            });
+            
+            // 纯文本选项变化时清除输出
+            if (inputPlainText) {
+                inputPlainText.addEventListener('change', () => {
+                    outputTextarea.value = '';
+                    statusMessage.classList.add('hidden');
+                });
+            }
+            
+            if (outputPlainText) {
+                outputPlainText.addEventListener('change', () => {
+                    outputTextarea.value = '';
+                    statusMessage.classList.add('hidden');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
