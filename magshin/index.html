@@ -1,0 +1,2202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>magshin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7928CA',
+                        secondary: '#FF0080',
+                        enemy: '#FF5722',
+                        player: '#4CAF50',
+                        bullet: '#FFEB3B',
+                        horseBlood: '#8B0000'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+            .text-shadow-lg { text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.7); }
+            .glitch { position: relative; }
+            .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+            .glitch::before { left: 2px; text-shadow: -2px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0); animation: glitch-anim 5s infinite linear alternate-reverse; }
+            .glitch::after { left: -2px; text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1; animation: glitch-anim2 1s infinite linear alternate-reverse; }
+            @keyframes glitch-anim { 0% { clip: rect(42px, 9999px, 44px, 0); } 5% { clip: rect(12px, 9999px, 59px, 0); } 10% { clip: rect(48px, 9999px, 29px, 0); } 15% { clip: rect(42px, 9999px, 73px, 0); } 20% { clip: rect(63px, 9999px, 27px, 0); } 25% { clip: rect(34px, 9999px, 55px, 0); } 30% { clip: rect(86px, 9999px, 73px, 0); } 35% { clip: rect(20px, 9999px, 20px, 0); } 40% { clip: rect(26px, 9999px, 60px, 0); } 45% { clip: rect(25px, 9999px, 66px, 0); } 50% { clip: rect(57px, 9999px, 98px, 0); } 55% { clip: rect(5px, 9999px, 46px, 0); } 60% { clip: rect(82px, 9999px, 31px, 0); } 65% { clip: rect(54px, 9999px, 27px, 0); } 70% { clip: rect(28px, 9999px, 99px, 0); } 75% { clip: rect(45px, 9999px, 69px, 0); } 80% { clip: rect(23px, 9999px, 85px, 0); } 85% { clip: rect(54px, 9999px, 84px, 0); } 90% { clip: rect(45px, 9999px, 47px, 0); } 95% { clip: rect(37px, 9999px, 20px, 0); } 100% { clip: rect(4px, 9999px, 91px, 0); } }
+            @keyframes glitch-anim2 { 0% { clip: rect(65px, 9999px, 100px, 0); } 5% { clip: rect(52px, 9999px, 74px, 0); } 10% { clip: rect(79px, 9999px, 85px, 0); } 15% { clip: rect(75px, 9999px, 5px, 0); } 20% { clip: rect(67px, 9999px, 61px, 0); } 25% { clip: rect(14px, 9999px, 79px, 0); } 30% { clip: rect(1px, 9999px, 66px, 0); } 35% { clip: rect(86px, 9999px, 30px, 0); } 40% { clip: rect(23px, 9999px, 98px, 0); } 45% { clip: rect(85px, 9999px, 72px, 0); } 50% { clip: rect(71px, 9999px, 75px, 0); } 55% { clip: rect(2px, 9999px, 48px, 0); } 60% { clip: rect(30px, 9999px, 16px, 0); } 65% { clip: rect(59px, 9999px, 50px, 0); } 70% { clip: rect(41px, 9999px, 62px, 0); } 75% { clip: rect(2px, 9999px, 82px, 0); } 80% { clip: rect(47px, 9999px, 73px, 0); } 85% { clip: rect(3px, 9999px, 27px, 0); } 90% { clip: rect(26px, 9999px, 55px, 0); } 95% { clip: rect(42px, 9999px, 97px, 0); } 100% { clip: rect(38px, 9999px, 49px, 0); } }
+            .health-bar { transition: width 0.3s ease-in-out; }
+            .floating { animation: float 3s ease-in-out infinite; }
+            @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+            .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+            @keyframes shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+            .victory-screen, .research-screen, .settings-screen, .save-screen { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); }
+            .explosion { position: absolute; pointer-events: none; animation: explode 0.5s ease-out forwards; opacity: 0.6; }
+            @keyframes explode { 0% { transform: scale(0); opacity: 0.6; } 50% { transform: scale(5); opacity: 0.6; } 100% { transform: scale(10); opacity: 0; } }
+            .tomato-explosion { position: absolute; pointer-events: none; animation: tomatoExplode 0.5s ease-out forwards; opacity: 0.6; }
+            @keyframes tomatoExplode { 0% { transform: scale(0); opacity: 0.6; } 50% { transform: scale(8); opacity: 0.6; } 100% { transform: scale(16); opacity: 0; } }
+            .screen-shake { animation: screenShake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+            @keyframes screenShake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+            .research-item { transition: all 0.2s ease; }
+            .research-item:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(121, 40, 202, 0.4); }
+            .enemy-phase2 { transform: scale(2); }
+            .enemy-phase3 { transform: scale(3); }
+            .enemy-phase4 { transform: scale(4); }
+            .enemy-phase5 { transform: scale(5); }
+            .enemy-phase6 { transform: scale(6); }
+            .enemy-phase-high { transform: scale(6) !important; }
+            .heal-effect { position: absolute; color: #4CAF50; font-weight: bold; pointer-events: none; animation: heal 2s ease-out forwards; }
+            @keyframes heal { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-30px); opacity: 0; } }
+            .fade-out { animation: fadeOut 2s ease-out forwards; }
+            @keyframes fadeOut { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } 100% { transform: scale(0); } }
+            .meat-piece { position: absolute; font-size: 24px; pointer-events: auto; cursor: pointer; animation: float 2s ease-in-out infinite; }
+            .meat-count { position: absolute; bottom: -8px; right: -8px; font-size: 12px; font-weight: bold; color: white; background-color: red; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; }
+            .phase-transition { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; font-weight: bold; color: white; text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073; z-index: 100; opacity: 0; pointer-events: none; animation: phaseTransition 2s ease-out forwards; }
+            @keyframes phaseTransition { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 70% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); } }
+            .research-button-disabled { background-color: #666666 !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
+            .settings-dropdown { position: absolute; bottom: 60px; left: 20px; background: #333; border-radius: 4px; padding: 8px 0; min-width: 120px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 100; }
+            .settings-item { padding: 8px 16px; color: white; cursor: pointer; transition: background 0.2s; }
+            .settings-item:hover { background: #555; }
+            .progress-container { width: 100%; height: 10px; background: #333; position: relative; }
+            .progress-bar { height: 100%; background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff); transition: width 0.3s ease; }
+            .form-input { background: #444; border: 1px solid #666; color: white; padding: 4px 8px; border-radius: 4px; width: 100%; }
+            .shield-bar { height: 3px; background: #2196F3; transition: width 0.3s ease-in-out; margin-top: 2px; }
+            .combo-counter { position: absolute; bottom: -10px; right: -10px; color: yellow; font-weight: bold; text-shadow: 1px 1px 2px black; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 overflow-hidden h-screen w-screen m-0 p-0">
+    <div id="progress-container" class="progress-container hidden">
+        <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+    </div>
+    <div id="start-screen" class="absolute inset-0 flex items-center justify-center z-50 bg-gray-900">
+        <div class="text-center">
+            <h1 class="text-[clamp(5rem,15vw,10rem)] font-bold text-white">
+                <span id="yuan" data-text="原" class="inline-block">原</span>
+                <span id="shen" class="inline-block">神</span>
+            </h1>
+            <p class="text-gray-400 mt-8 text-lg opacity-0 transition-opacity duration-1000" id="start-message">按任意键或点击鼠标开始游戏</p>
+            <p class="text-green-400 mt-4 text-lg opacity-0 transition-opacity duration-1000 delay-1000" id="endless-mode-text">无尽模式已启用</p>
+        </div>
+    </div>
+    <div id="game-screen" class="hidden relative h-screen w-screen">
+        <div class="absolute top-14 left-1/2 transform -translate-x-1/2 w-[80%] max-w-2xl bg-gray-800 rounded-full p-2 shadow-lg z-10">
+            <div id="enemy-shield-container" class="h-3 bg-gray-700 rounded-full overflow-hidden hidden">
+                <div id="enemy-shield-bar" class="shield-bar w-[0%]"></div>
+            </div>
+            <div id="enemy-health-container" class="h-8 bg-gray-700 rounded-full overflow-hidden">
+                <div id="enemy-health-bar" class="health-bar h-full bg-enemy w-[100%]"></div>
+                <div class="absolute top-14 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center z-20">
+                    <div id="enemy-name" class="text-white font-bold text-shadow">小马神</div>
+                    <div id="enemy-health-text" class="text-white text-sm text-shadow">100/100</div>
+                </div>
+            </div>
+        </div>
+        <div id="phase-indicator" class="hidden absolute top-14 right-4 bg-gray-800 bg-opacity-80 px-4 py-2 rounded-lg shadow-lg z-10">
+            <div class="text-white font-bold">阶段: <span id="current-phase" class="text-yellow-400">1</span>/230</div>
+            <div class="text-white font-bold">形态: <span id="current-form" class="text-blue-400">1</span>/10</div>
+            <div class="text-white font-bold">兔神上限: <span id="rabbit-limit" class="text-blue-400">1</span></div>
+            <div class="text-white font-bold">马尸: <span id="horse-corpses" class="text-red-400">0</span></div>
+            <div class="text-white font-bold">马血: <span id="horse-blood" class="text-horseBlood">0</span></div>
+        </div>
+        <div id="reset-button-container" class="hidden absolute top-14 left-4 bg-gray-800 bg-opacity-80 px-4 py-2 rounded-lg shadow-lg z-10">
+            <button id="reset-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded transition-all">
+                重置游戏
+            </button>
+        </div>
+        <div id="rabbits-health-container" class="hidden absolute top-26 left-1/2 transform -translate-x-1/2 w-[60%] max-w-xl flex flex-col gap-2 z-10"></div>
+        <div id="meat-container" class="hidden absolute top-26 left-4 bg-gray-800 bg-opacity-80 px-4 py-2 rounded-lg shadow-lg z-10 flex items-center gap-4">
+            <div class="text-white font-bold flex items-center">
+                <span>🥩: </span>
+                <span id="meat-pieces" class="ml-2 text-yellow-400">0</span>
+            </div>
+            <button id="research-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-1 px-3 rounded transition-all">
+                研究
+            </button>
+            <button id="infuse-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-1 px-3 rounded transition-all">
+                灌注
+            </button>
+        </div>
+        <div id="player" class="absolute text-3xl floating text-red-600">❤</div>
+        <div id="enemy" class="absolute text-4xl floating">🐎</div>
+        <div id="rabbits-container" class="absolute inset-0 pointer-events-none"></div>
+        <div id="bullets-container" class="absolute inset-0 pointer-events-none"></div>
+        <div id="effects-container" class="absolute inset-0 pointer-events-none"></div>
+        <div id="meat-container-elements" class="absolute inset-0"></div>
+        <div id="phase-transition-container" class="absolute inset-0 pointer-events-none z-50"></div>
+        <div id="game-over-screen" class="hidden victory-screen absolute inset-0 flex flex-col items-center justify-center z-50">
+            <h2 class="text-[clamp(2rem,5vw,4rem)] font-bold text-red-400 text-shadow-lg mb-8">游戏结束</h2>
+            <p class="text-white text-xl mb-4">你坚持到了阶段 <span id="final-phase" class="text-yellow-400">1</span></p>
+            <p class="text-white text-xl mb-4">收集的🥩: <span id="final-meat" class="text-yellow-400">0</span></p>
+            <button id="restart-button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">
+                再来一局
+            </button>
+        </div>
+        <div id="victory-screen" class="hidden victory-screen absolute inset-0 flex flex-col items-center justify-center z-50">
+            <h2 class="text-[clamp(2rem,5vw,4rem)] font-bold text-yellow-400 text-shadow-lg mb-8">🎉 胜利! 🎉</h2>
+            <p class="text-white text-xl mb-4">你成功击败了永恒马神!</p>
+            <p class="text-white text-xl mb-4">完成了所有230个阶段!</p>
+            <p class="text-white text-xl mb-4">收集的🥩: <span id="victory-meat" class="text-yellow-400">0</span></p>
+            <p class="text-white text-xl mb-8">收集的马血: <span id="victory-blood" class="text-horseBlood">0</span></p>
+            <button id="victory-restart-button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">
+                再来一局
+            </button>
+        </div>
+        <div id="reset-confirm-screen" class="hidden victory-screen absolute inset-0 flex flex-col items-center justify-center z-60">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-red-400 text-shadow-lg mb-6">确认重置</h2>
+            <p class="text-white text-xl mb-4">重置后游戏将重新开始，获得:</p>
+            <p class="text-white text-xl mb-4">马尸: <span id="reset-corpses" class="text-red-400">0</span></p>
+            <p class="text-white text-xl mb-4">马血: <span id="reset-blood" class="text-horseBlood">0</span></p>
+            <div class="flex gap-4">
+                <button id="confirm-reset-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition-all">
+                    确认重置
+                </button>
+                <button id="cancel-reset-button" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full transition-all">
+                    取消
+                </button>
+            </div>
+        </div>
+        <div id="research-screen" class="hidden research-screen absolute inset-0 flex flex-col items-center justify-center z-50 p-4">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-purple-400 text-shadow-lg mb-6">研究中心</h2>
+            <p class="text-white mb-6">当前🥩: <span id="research-meat" class="text-yellow-400">0</span></p>
+            <p class="text-white mb-6">当前马尸: <span id="research-corpses" class="text-red-400">0</span></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl overflow-y-auto max-h-[70vh]">
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">Mike 召唤</h3>
+                    <p class="text-gray-300 mb-2">CF类子弹失败概率减少1%，指数叠加</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-mike-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-mike-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-mike-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-mike-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-mike-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-mike-perm-cost" class="text-red-400">6</span></p>
+                            <button id="research-mike-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">KFC 配送</h3>
+                    <p class="text-gray-300 mb-2">菊老类子弹失败概率减少2%，指数叠加</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-kfc-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-kfc-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-kfc-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-kfc-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-kfc-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-kfc-perm-cost" class="text-red-400">6</span></p>
+                            <button id="research-kfc-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">Cloudflare 验证</h3>
+                    <p class="text-gray-300 mb-2">agc类子弹失败概率减少4%，指数叠加</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-cloudflare-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-cloudflare-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-cloudflare-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-cloudflare-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-cloudflare-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-cloudflare-perm-cost" class="text-red-400">7</span></p>
+                            <button id="research-cloudflare-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">吃瓜群众</h3>
+                    <p class="text-gray-300 mb-2">502424类子弹失败概率减少8%，指数叠加</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-potion-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-potion-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-potion-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-potion-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-potion-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-potion-perm-cost" class="text-red-400">8</span></p>
+                            <button id="research-potion-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="research-reaction-container" class="hidden research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">反应迟钝</h3>
+                    <p class="text-gray-300 mb-2">騳神与兔神的生命共享间隔增加0.6s</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-reaction-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-reaction-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-reaction-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-reaction-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-reaction-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-reaction-perm-cost" class="text-red-400">10</span></p>
+                            <button id="research-reaction-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="research-latency-container" class="hidden research-item bg-gray-800 rounded-lg p-4 border border-purple-500">
+                    <h3 class="text-xl font-bold text-white mb-2">网络延迟</h3>
+                    <p class="text-gray-300 mb-2">马神召唤兔神的间隔增加1s</p>
+                    <p class="text-gray-400 mb-2">临时等级: <span id="research-latency-level" class="text-yellow-400">0</span></p>
+                    <p class="text-gray-400 mb-2">永久等级: <span id="research-latency-perm-level" class="text-red-400">0</span></p>
+                    <p class="text-gray-400 mb-2">总等级: <span id="research-latency-total-level" class="text-green-400">0</span></p>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <p class="text-gray-400 mb-1">🥩花费: <span id="research-latency-cost" class="text-yellow-400">1</span></p>
+                            <button id="research-latency-button" class="bg-primary hover:bg-primary/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用🥩升级
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 mb-1">马尸花费: <span id="research-latency-perm-cost" class="text-red-400">13</span></p>
+                            <button id="research-latency-perm-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                                用马尸升级
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="close-research-button" class="mt-8 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                返回游戏
+            </button>
+        </div>
+        <div id="infuse-screen" class="hidden research-screen absolute inset-0 flex flex-col items-center justify-center z-50 p-4">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-horseBlood text-shadow-lg mb-6">马血灌注</h2>
+            <p class="text-white mb-6">当前马血: <span id="infuse-blood" class="text-horseBlood">0</span></p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl overflow-y-auto max-h-[70vh]">
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">Code Chef</h3>
+                    <p class="text-gray-300 mb-2">CF类子弹伤害增加1</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-codechef-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前伤害加成: <span id="infuse-codechef-bonus" class="text-green-400">0</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-codechef-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-codechef-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">gdgzez 宿舍</h3>
+                    <p class="text-gray-300 mb-2">菊老类子弹伤害增加2</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-gdgzez-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前伤害加成: <span id="infuse-gdgzez-bonus" class="text-green-400">0</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-gdgzez-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-gdgzez-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">构造宗师</h3>
+                    <p class="text-gray-300 mb-2">agc类子弹伤害增加3</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-constructor-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前伤害加成: <span id="infuse-constructor-bonus" class="text-green-400">0</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-constructor-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-constructor-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">个性开放</h3>
+                    <p class="text-gray-300 mb-2">502424类子弹伤害增加4</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-personality-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前伤害加成: <span id="infuse-personality-bonus" class="text-green-400">0</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-personality-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-personality-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">过敏反应</h3>
+                    <p class="text-gray-300 mb-2">🍅伤害提升一倍</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-allergy-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前伤害倍数: <span id="infuse-allergy-bonus" class="text-green-400">1x</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-allergy-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-allergy-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood">
+                    <h3 class="text-xl font-bold text-white mb-2">物以类聚</h3>
+                    <p class="text-gray-300 mb-2">增加玩家吸收肉的范围</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-cluster-count" class="text-horseBlood">0</span>/12</p>
+                    <p class="text-gray-400 mb-2">当前范围: <span id="infuse-cluster-bonus" class="text-green-400">0px</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-cluster-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-cluster-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+                <div class="research-item bg-gray-800 rounded-lg p-4 border border-horseBlood md:col-span-2">
+                    <h3 class="text-xl font-bold text-white mb-2">进化</h3>
+                    <p class="text-gray-300 mb-2">每次重置获得马尸和马血量增加5%（线性叠加）</p>
+                    <p class="text-gray-400 mb-2">灌注次数: <span id="infuse-evolution-count" class="text-horseBlood">0</span></p>
+                    <p class="text-gray-400 mb-2">当前加成: <span id="infuse-evolution-bonus" class="text-green-400">0%</span></p>
+                    <p class="text-gray-400 mb-2">本次花费: <span id="infuse-evolution-cost" class="text-horseBlood">2</span> 马血</p>
+                    <button id="infuse-evolution-button" class="bg-horseBlood hover:bg-horseBlood/80 text-white font-bold py-2 px-4 rounded transition-all w-full">
+                        灌注
+                    </button>
+                </div>
+            </div>
+            <button id="close-infuse-button" class="mt-8 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                返回游戏
+            </button>
+        </div>
+        <div id="settings-button" class="absolute bottom-20 left-20 bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg z-20 cursor-pointer transition-all">
+            <span class="text-xl">⚙</span>
+        </div>
+        <div id="settings-dropdown" class="hidden settings-dropdown">
+            <div id="save-option" class="settings-item">存档</div>
+            <div id="names-option" class="settings-item">名称</div>
+        </div>
+        <div id="names-screen" class="hidden save-screen absolute inset-0 flex flex-col items-center justify-center z-60 p-4">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-blue-400 text-shadow-lg mb-6">形态名称设置</h2>
+            <div class="w-full max-w-2xl bg-gray-800 rounded-lg p-6 border border-blue-500 mb-6 overflow-y-auto max-h-[70vh]">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第1形态（阶段1-3）</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="text-gray-300 mb-1 block">阶段1名称:</label>
+                            <input type="text" id="form1-phase1-name" class="form-input" disabled>
+                        </div>
+                        <div>
+                            <label class="text-gray-300 mb-1 block">阶段2名称:</label>
+                            <input type="text" id="form1-phase2-name" class="form-input" disabled>
+                        </div>
+                        <div>
+                            <label class="text-gray-300 mb-1 block">阶段3名称:</label>
+                            <input type="text" id="form1-phase3-name" class="form-input" disabled>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第2形态（阶段4-10）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form2-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第3形态（阶段11-20）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form3-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第4形态（阶段21-35）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form4-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第5形态（阶段36-55）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form5-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第6形态（阶段56-80）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form6-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第7形态（阶段81-110）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form7-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第8形态（阶段111-145）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form8-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第9形态（阶段146-185）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form9-name" class="form-input" disabled>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-white mb-3">第10形态（阶段186-230）</h3>
+                    <div>
+                        <label class="text-gray-300 mb-1 block">名称:</label>
+                        <input type="text" id="form10-name" class="form-input" disabled>
+                    </div>
+                </div>
+            </div>
+            <button id="close-names-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                返回游戏
+            </button>
+        </div>
+        <div id="save-screen" class="hidden save-screen absolute inset-0 flex flex-col items-center justify-center z-60 p-4">
+            <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-blue-400 text-shadow-lg mb-6">存档管理</h2>
+            <div class="w-full max-w-2xl bg-gray-800 rounded-lg p-6 border border-blue-500 mb-6">
+                <label class="text-white mb-2 block">存档数据:</label>
+                <textarea id="save-data" class="w-full h-32 bg-gray-900 text-white p-3 rounded mb-4" placeholder="存档数据将显示在这里..."></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button id="export-save-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all">
+                        导出存档
+                    </button>
+                    <button id="import-save-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-all">
+                        导入存档
+                    </button>
+                    <button id="download-save-button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition-all">
+                        导出为文件
+                    </button>
+                </div>
+            </div>
+            <button id="close-save-button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-full transition-all">
+                返回游戏
+            </button>
+        </div>
+    </div>
+    <script>
+        // 全局变量初始化
+        let gHC = 0;
+        let gHB = 0;
+        let hRWC = false;
+        let pR = { m: 0, k: 0, c: 0, p: 0, r: 0, l: 0 };
+        let i = { c: 0, g: 0, co: 0, p: 0, e: 0, a: 0, cl: 0 }; // 添加cl用于"物以类聚"
+        let uFN = [true, false, false, false, false, false, false, false, false, false];
+        let fN = [
+            ["小马神", "小騳神", "小骉神"],
+            "有劲之马",
+            "天蓬元马",
+            "齐天马圣",
+            "如来马祖",
+            "无尽之马",
+            "无敌之马",
+            "轮回马神",
+            "贯古马神",
+            "永恒马神"
+        ];
+        // 爆炸连击变量
+        let comboCount = 0;
+        let lastExplosionTime = 0;
+        let comboElement = null;
+        
+        const gs = {
+            s: false, p: 1, rl: 0, tmc: 0, hem: false,
+            pl: { x: 0, y: 0, sp: 1, w: 30, h: 30 },
+            en: { x: 0, y: 0, h: 100, mh: 100, sp: 4, w: 40, h: 40, n: "小马神", shield: 0 },
+            rb: [], bl: [], mp: 0, md: [],
+            r: { m: 0, k: 0, c: 0, p: 0, r: 0, l: 0 },
+            hsi: 0, hsd: 5000, ish: false, sHST: 0, lSHT: 0,
+            rSBI: 8000, lRST: 0,
+            k: { w: false, a: false, s: false, d: false }, imd: false, fi: null, go: false
+        };
+        
+        // DOM元素引用
+        const ss = document.getElementById('start-screen');
+        const gsEl = document.getElementById('game-screen');
+        const yc = document.getElementById('yuan');
+        const sm = document.getElementById('start-message');
+        const emt = document.getElementById('endless-mode-text');
+        const plEl = document.getElementById('player');
+        const enEl = document.getElementById('enemy');
+        const rbC = document.getElementById('rabbits-container');
+        const ehb = document.getElementById('enemy-health-bar');
+        const esb = document.getElementById('enemy-shield-bar');
+        const esc = document.getElementById('enemy-shield-container');
+        const enNE = document.getElementById('enemy-name');
+        const eht = document.getElementById('enemy-health-text');
+        const rbHC = document.getElementById('rabbits-health-container');
+        const blC = document.getElementById('bullets-container');
+        const efC = document.getElementById('effects-container');
+        const mc = document.getElementById('meat-container');
+        const mpe = document.getElementById('meat-pieces');
+        const mce = document.getElementById('meat-container-elements');
+        const gos = document.getElementById('game-over-screen');
+        const fme = document.getElementById('final-meat');
+        const fpe = document.getElementById('final-phase');
+        const rb = document.getElementById('restart-button');
+        const pi = document.getElementById('phase-indicator');
+        const cpe = document.getElementById('current-phase');
+        const cfe = document.getElementById('current-form');
+        const rle = document.getElementById('rabbit-limit');
+        const hce = document.getElementById('horse-corpses');
+        const hbe = document.getElementById('horse-blood');
+        const ptc = document.getElementById('phase-transition-container');
+        const rbc = document.getElementById('reset-button-container');
+        const rsb = document.getElementById('reset-button');
+        const rcs = document.getElementById('reset-confirm-screen');
+        const rce = document.getElementById('reset-corpses');
+        const rbeEl = document.getElementById('reset-blood');
+        const crb = document.getElementById('confirm-reset-button');
+        const cnb = document.getElementById('cancel-reset-button');
+        const rs = document.getElementById('research-screen');
+        const rsbEl = document.getElementById('research-button');
+        const crbEl = document.getElementById('close-research-button');
+        const rme = document.getElementById('research-meat');
+        const rceEl = document.getElementById('research-corpses');
+        const rrc = document.getElementById('research-reaction-container');
+        const rlc = document.getElementById('research-latency-container');
+        const rml = document.getElementById('research-mike-level');
+        const rmpl = document.getElementById('research-mike-perm-level');
+        const rmtl = document.getElementById('research-mike-total-level');
+        const rmc = document.getElementById('research-mike-cost');
+        const rmcp = document.getElementById('research-mike-perm-cost');
+        const rmb = document.getElementById('research-mike-button');
+        const rmcb = document.getElementById('research-mike-perm-button');
+        const rkl = document.getElementById('research-kfc-level');
+        const rkpl = document.getElementById('research-kfc-perm-level');
+        const rktl = document.getElementById('research-kfc-total-level');
+        const rkc = document.getElementById('research-kfc-cost');
+        const rkcp = document.getElementById('research-kfc-perm-cost');
+        const rkb = document.getElementById('research-kfc-button');
+        const rkcb = document.getElementById('research-kfc-perm-button');
+        const rcl = document.getElementById('research-cloudflare-level');
+        const rcpl = document.getElementById('research-cloudflare-perm-level');
+        const rctl = document.getElementById('research-cloudflare-total-level');
+        const rcc = document.getElementById('research-cloudflare-cost');
+        const rccp = document.getElementById('research-cloudflare-perm-cost');
+        const rcbEl = document.getElementById('research-cloudflare-button');
+        const rccb = document.getElementById('research-cloudflare-perm-button');
+        const rpl = document.getElementById('research-potion-level');
+        const rppl = document.getElementById('research-potion-perm-level');
+        const rptl = document.getElementById('research-potion-total-level');
+        const rpc = document.getElementById('research-potion-cost');
+        const rpcp = document.getElementById('research-potion-perm-cost');
+        const rpb = document.getElementById('research-potion-button');
+        const rpcb = document.getElementById('research-potion-perm-button');
+        const rrlEl = document.getElementById('research-reaction-level');
+        const rrpl = document.getElementById('research-reaction-perm-level');
+        const rrtl = document.getElementById('research-reaction-total-level');
+        const rrcEl = document.getElementById('research-reaction-cost');
+        const rrcp = document.getElementById('research-reaction-perm-cost');
+        const rrb = document.getElementById('research-reaction-button');
+        const rrcb = document.getElementById('research-reaction-perm-button');
+        const rll = document.getElementById('research-latency-level');
+        const rlpl = document.getElementById('research-latency-perm-level');
+        const rltl = document.getElementById('research-latency-total-level');
+        const rlcEl = document.getElementById('research-latency-cost');
+        const rlcp = document.getElementById('research-latency-perm-cost');
+        const rlb = document.getElementById('research-latency-button');
+        const rlcb = document.getElementById('research-latency-perm-button');
+        const is = document.getElementById('infuse-screen');
+        const ib = document.getElementById('infuse-button');
+        const cib = document.getElementById('close-infuse-button');
+        const ibe = document.getElementById('infuse-blood');
+        const icc = document.getElementById('infuse-codechef-count');
+        const icb = document.getElementById('infuse-codechef-bonus');
+        const iccEl = document.getElementById('infuse-codechef-cost');
+        const icbEl = document.getElementById('infuse-codechef-button');
+        const igc = document.getElementById('infuse-gdgzez-count');
+        const igb = document.getElementById('infuse-gdgzez-bonus');
+        const igcEl = document.getElementById('infuse-gdgzez-cost');
+        const igbEl = document.getElementById('infuse-gdgzez-button');
+        const ico = document.getElementById('infuse-constructor-count');
+        const icob = document.getElementById('infuse-constructor-bonus');
+        const icoEl = document.getElementById('infuse-constructor-cost');
+        const icobEl = document.getElementById('infuse-constructor-button');
+        const ipc = document.getElementById('infuse-personality-count');
+        const ipb = document.getElementById('infuse-personality-bonus');
+        const ipcEl = document.getElementById('infuse-personality-cost');
+        const ipbEl = document.getElementById('infuse-personality-button');
+        const iec = document.getElementById('infuse-evolution-count');
+        const ieb = document.getElementById('infuse-evolution-bonus');
+        const iecEl = document.getElementById('infuse-evolution-cost');
+        const iebEl = document.getElementById('infuse-evolution-button');
+        const iac = document.getElementById('infuse-allergy-count');
+        const iab = document.getElementById('infuse-allergy-bonus');
+        const iacEl = document.getElementById('infuse-allergy-cost');
+        const iabEl = document.getElementById('infuse-allergy-button');
+        // 新增"物以类聚"相关元素
+        const iclc = document.getElementById('infuse-cluster-count');
+        const iclb = document.getElementById('infuse-cluster-bonus');
+        const iclcEl = document.getElementById('infuse-cluster-cost');
+        const iclbEl = document.getElementById('infuse-cluster-button');
+        
+        const stb = document.getElementById('settings-button');
+        const sdd = document.getElementById('settings-dropdown');
+        const so = document.getElementById('save-option');
+        const no = document.getElementById('names-option');
+        const sas = document.getElementById('save-screen');
+        const nss = document.getElementById('names-screen');
+        const sda = document.getElementById('save-data');
+        const exportSaveButton = document.getElementById('export-save-button'); // 重命名解决冲突
+        const importSaveButton = document.getElementById('import-save-button');
+        const downloadSaveButton = document.getElementById('download-save-button');
+        const csb = document.getElementById('close-save-button');
+        const cnbEl = document.getElementById('close-names-button');
+        const vcs = document.getElementById('victory-screen');
+        const vme = document.getElementById('victory-meat');
+        const vbe = document.getElementById('victory-blood');
+        const vrb = document.getElementById('victory-restart-button');
+        const pgc = document.getElementById('progress-container');
+        const pgb = document.getElementById('progress-bar');
+        const fnInputs = [
+            [
+                document.getElementById('form1-phase1-name'),
+                document.getElementById('form1-phase2-name'),
+                document.getElementById('form1-phase3-name')
+            ],
+            document.getElementById('form2-name'),
+            document.getElementById('form3-name'),
+            document.getElementById('form4-name'),
+            document.getElementById('form5-name'),
+            document.getElementById('form6-name'),
+            document.getElementById('form7-name'),
+            document.getElementById('form8-name'),
+            document.getElementById('form9-name'),
+            document.getElementById('form10-name')
+        ];
+        
+        // 初始化事件监听
+        fnInputs[0][0].addEventListener('change', () => { fN[0][0] = fnInputs[0][0].value; updateEnemyName(); });
+        fnInputs[0][1].addEventListener('change', () => { fN[0][1] = fnInputs[0][1].value; updateEnemyName(); });
+        fnInputs[0][2].addEventListener('change', () => { fN[0][2] = fnInputs[0][2].value; updateEnemyName(); });
+        for (let i = 1; i < 10; i++) {
+            fnInputs[i].addEventListener('change', () => { fN[i] = fnInputs[i].value; updateEnemyName(); });
+        }
+        
+        // 初始化游戏启动
+        setTimeout(() => {
+            yc.classList.add('glitch');
+            setTimeout(() => {
+                yc.textContent = '马';
+                yc.classList.remove('glitch');
+                sm.classList.add('opacity-100');
+                emt.classList.add('opacity-100');
+                document.addEventListener('keydown', startGameOnce);
+                document.addEventListener('click', startGameOnClick);
+            }, 5000);
+        }, 3000);
+        
+        // 游戏启动函数
+        function startGameOnClick(e) {
+            if (e.target.closest('#start-screen')) {
+                startGame();
+                document.removeEventListener('click', startGameOnClick);
+                document.removeEventListener('keydown', startGameOnce);
+            }
+        }
+        
+        function startGameOnce() {
+            startGame();
+            document.removeEventListener('keydown', startGameOnce);
+            document.removeEventListener('click', startGameOnClick);
+        }
+        
+        // 获取形态和倍率
+        function getFormAndMultiplier(phase) {
+            if (phase >= 1 && phase <= 3) return { form: 1, multiplier: 1 };
+            if (phase >= 4 && phase <= 10) return { form: 2, multiplier: 2 };
+            if (phase >= 11 && phase <= 20) return { form: 3, multiplier: 4 };
+            if (phase >= 21 && phase <= 35) return { form: 4, multiplier: 8 };
+            if (phase >= 36 && phase <= 55) return { form: 5, multiplier: 16 };
+            if (phase >= 56 && phase <= 80) return { form: 6, multiplier: 32 };
+            if (phase >= 81 && phase <= 110) return { form: 7, multiplier: 64 };
+            if (phase >= 111 && phase <= 145) return { form: 8, multiplier: 128 };
+            if (phase >= 146 && phase <= 185) return { form: 9, multiplier: 256 };
+            if (phase >= 186 && phase <= 230) return { form: 10, multiplier: 512 };
+            return { form: 10, multiplier: 512 };
+        }
+        
+        // 更新敌人名称
+        function updateEnemyName() {
+            const phase = gs.p;
+            let name;
+            if (phase >= 1 && phase <= 3) {
+                name = fN[0][phase - 1];
+            } else if (phase >= 4 && phase <= 10) {
+                name = fN[1];
+            } else if (phase >= 11 && phase <= 20) {
+                name = fN[2];
+            } else if (phase >= 21 && phase <= 35) {
+                name = fN[3];
+            } else if (phase >= 36 && phase <= 55) {
+                name = fN[4];
+            } else if (phase >= 56 && phase <= 80) {
+                name = fN[5];
+            } else if (phase >= 81 && phase <= 110) {
+                name = fN[6];
+            } else if (phase >= 111 && phase <= 145) {
+                name = fN[7];
+            } else if (phase >= 146 && phase <= 185) {
+                name = fN[8];
+            } else if (phase >= 186 && phase <= 230) {
+                name = fN[9];
+            }
+            gs.en.n = name;
+            enNE.textContent = name;
+        }
+        
+        // 更新名称输入框
+        function updateNameInputs() {
+            fnInputs[0][0].value = fN[0][0];
+            fnInputs[0][1].value = fN[0][1];
+            fnInputs[0][2].value = fN[0][2];
+            for (let i = 1; i < 10; i++) {
+                fnInputs[i].value = fN[i];
+            }
+            for (let i = 0; i < 10; i++) {
+                if (uFN[i]) {
+                    if (i === 0) {
+                        fnInputs[0][0].disabled = false;
+                        fnInputs[0][1].disabled = false;
+                        fnInputs[0][2].disabled = false;
+                    } else {
+                        fnInputs[i].disabled = false;
+                    }
+                } else {
+                    if (i === 0) {
+                        fnInputs[0][0].disabled = true;
+                        fnInputs[0][1].disabled = true;
+                        fnInputs[0][2].disabled = true;
+                    } else {
+                        fnInputs[i].disabled = true;
+                    }
+                }
+            }
+        }
+        
+        // 获取兔神上限
+        function getRabbitLimit(phase) {
+            if (phase === 1) return 0;
+            if (phase >= 2 && phase <= 35) return 1;
+            if (phase >= 36 && phase <= 110) return 2;
+            if (phase >= 111 && phase <= 230) return 3;
+            return 3;
+        }
+        
+        // 获取兔神生命值百分比
+        function getRabbitHealthPercentage(phase) {
+            if (phase === 1) return 0;
+            if (phase >= 2 && phase <= 35) return 0.6;
+            if (phase >= 36 && phase <= 110) return 0.45;
+            if (phase >= 111 && phase <= 230) return 0.4;
+            return 0.4;
+        }
+        
+        // 计算研究成本
+        function cHCC(t, l) {
+            const bc = { m: 6, k: 6, c: 6, p: 6, r: 6, l: 6};
+            if (l === 0) return bc[t];
+            let a = bc[t];
+            let b = bc[t];
+            for (let i = 1; i < l; i++) {
+                const c = a + b - 5;
+                a = b;
+                b = c;
+            }
+            return b;
+        }
+        
+        // 重置游戏
+        function rG() {
+            gs.p = 1;
+            gs.rl = getRabbitLimit(gs.p);
+            const {multiplier} = getFormAndMultiplier(gs.p);
+            gs.en.h = 100 * multiplier;
+            gs.en.mh = 100 * multiplier;
+            gs.en.shield = 0;
+            updateEnemyName();
+            gs.en.sp = 4;
+            gs.rb = [];
+            gs.mp = 0;
+            gs.tmc = 0;
+            gs.hem = false;
+            gs.md = [];
+            gs.go = false;
+            gs.hsi = 0;
+            gs.hsd = 5000;
+            gs.ish = false;
+            gs.sHST = 0;
+            gs.lRST = 0;
+            gs.r = { m: 0, k: 0, c: 0, p: 0, r: 0, l: 0 };
+            enEl.className = 'absolute text-4xl floating';
+            pi.classList.add('hidden');
+            rbHC.classList.add('hidden');
+            rbC.innerHTML = '';
+            rrc.classList.add('hidden');
+            rlc.classList.add('hidden');
+            rbc.classList.add('hidden');
+            efC.innerHTML = '';
+            mce.innerHTML = '';
+            ptc.innerHTML = '';
+            esc.classList.add('hidden');
+            uMP();
+            gs.bl.forEach(b => b.element.remove());
+            gs.bl = [];
+            gos.classList.add('hidden');
+            vcs.classList.add('hidden');
+            rcs.classList.add('hidden');
+            rs.classList.add('hidden');
+            is.classList.add('hidden');
+            sas.classList.add('hidden');
+            nss.classList.add('hidden');
+            sdd.classList.add('hidden');
+            enNE.textContent = gs.en.n;
+            cpe.textContent = gs.p;
+            const formInfo = getFormAndMultiplier(gs.p);
+            cfe.textContent = formInfo.form;
+            rle.textContent = gs.rl;
+            hce.textContent = gHC;
+            hbe.textContent = gHB;
+            updateProgress();
+            uHB();
+            uRU();
+            uIU();
+            iP();
+            requestAnimationFrame(gL);
+        }
+        
+        // 重置并获得奖励
+        function reG() {
+            const eb = 1 + i.e * 0.05;
+            const nc = Math.floor(gs.tmc * 0.01 * eb);
+            const nb = Math.floor(gs.p * eb);
+            gHC += nc;
+            gHB += nb;
+            if (nc > 0) hRWC = true;
+            hce.textContent = gHC;
+            hbe.textContent = gHB;
+            rcs.classList.add('hidden');
+            rG();
+        }
+        
+        // 开始游戏
+        function startGame() {
+            ss.classList.add('hidden');
+            pgc.classList.remove('hidden');
+            gsEl.classList.remove('hidden');
+            gs.s = true;
+            iP();
+            sMC();
+            rG();
+            sRB();
+            sR();
+            sI();
+            sS();
+            hce.textContent = gHC;
+            hbe.textContent = gHB;
+            uIU();
+            updateNameInputs();
+            requestAnimationFrame(gL);
+        }
+        
+        // 更新进度条
+        function updateProgress() {
+            const percent = (gs.p / 230) * 100;
+            pgb.style.width = `${percent}%`;
+        }
+        
+        // 设置相关功能
+        function sS() {
+            stb.addEventListener('click', () => {
+                sdd.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#settings-button') && !e.target.closest('#settings-dropdown')) {
+                    sdd.classList.add('hidden');
+                }
+            });
+            so.addEventListener('click', () => {
+                sas.classList.remove('hidden');
+                sdd.classList.add('hidden');
+            });
+            no.addEventListener('click', () => {
+                updateNameInputs();
+                nss.classList.remove('hidden');
+                sdd.classList.add('hidden');
+            });
+            csb.addEventListener('click', () => sas.classList.add('hidden'));
+            cnbEl.addEventListener('click', () => nss.classList.add('hidden'));
+            exportSaveButton.addEventListener('click', exportSave);
+            importSaveButton.addEventListener('click', importSave);
+            downloadSaveButton.addEventListener('click', downloadSave);
+        }
+        
+        // 导出存档
+        function exportSave() {
+            const sd = {
+                gHC: gHC,
+                gHB: gHB,
+                hRWC: hRWC,
+                pR: pR,
+                i: i,
+                uFN: uFN,
+                fN: fN,
+                gs: {
+                    p: gs.p,
+                    rl: gs.rl,
+                    tmc: gs.tmc,
+                    hem: gs.hem,
+                    en: {
+                        h: gs.en.h,
+                        mh: gs.en.mh,
+                        sp: gs.en.sp,
+                        n: gs.en.n,
+                        shield: gs.en.shield
+                    },
+                    r: gs.r,
+                    mp: gs.mp
+                }
+            };
+            const jd = JSON.stringify(sd);
+            const cd = LZString.compressToBase64(jd);
+            sda.value = cd;
+        }
+        
+        // 导入存档
+        function importSave() {
+            try {
+                const cd = sda.value;
+                if (!cd) return;
+                const jd = LZString.decompressFromBase64(cd);
+                const sd = JSON.parse(jd);
+                gHC = sd.gHC;
+                gHB = sd.gHB;
+                hRWC = sd.hRWC;
+                pR = sd.pR;
+                i = sd.i || { c: 0, g: 0, co: 0, p: 0, e: 0, a: 0, cl: 0 };
+                uFN = sd.uFN || [true, false, false, false, false, false, false, false, false, false];
+                fN = sd.fN || [
+                    ["小马神", "小騳神", "小骉神"],
+                    "有劲之马",
+                    "天蓬元马",
+                    "齐天马圣",
+                    "如来马祖",
+                    "无尽之马",
+                    "无敌之马",
+                    "轮回马神",
+                    "贯古马神",
+                    "永恒马神"
+                ];
+                gs.p = sd.gs.p;
+                gs.rl = sd.gs.rl;
+                gs.tmc = sd.gs.tmc;
+                gs.hem = sd.gs.hem;
+                gs.en.h = sd.gs.en.h;
+                gs.en.mh = sd.gs.en.mh;
+                gs.en.sp = sd.gs.en.sp;
+                gs.en.n = sd.gs.en.n;
+                gs.en.shield = sd.gs.en.shield || 0;
+                gs.r = sd.gs.r;
+                gs.mp = sd.gs.mp;
+                hce.textContent = gHC;
+                hbe.textContent = gHB;
+                cpe.textContent = gs.p;
+                const formInfo = getFormAndMultiplier(gs.p);
+                cfe.textContent = formInfo.form;
+                rle.textContent = gs.rl;
+                enNE.textContent = gs.en.n;
+                uMP();
+                uHB();
+                uRU();
+                uIU();
+                updateProgress();
+                updateNameInputs();
+                sas.classList.add('hidden');
+            } catch (e) {
+                alert('导入失败，请检查存档数据是否正确');
+            }
+        }
+        
+        // 下载存档
+        function downloadSave() {
+            exportSave();
+            const d = new Date();
+            const dt = `${d.getFullYear()}${(d.getMonth()+1).toString().padStart(2,'0')}${d.getDate().toString().padStart(2,'0')}${d.getHours().toString().padStart(2,'0')}${d.getMinutes().toString().padStart(2,'0')}${d.getSeconds().toString().padStart(2,'0')}`;
+            const fn = `原神${dt}.txt`;
+            const b = new Blob([sda.value], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(b);
+            a.download = fn;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        // 重置按钮相关
+        function sRB() {
+            rsb.addEventListener('click', () => {
+                const eb = 1 + i.e * 0.05;
+                const rc = Math.floor(gs.tmc * 0.01 * eb);
+                const rb = Math.floor(gs.p * eb);
+                rce.textContent = rc;
+                rbeEl.textContent = rb;
+                rcs.classList.remove('hidden');
+            });
+            crb.addEventListener('click', reG);
+            cnb.addEventListener('click', () => rcs.classList.add('hidden'));
+            vrb.addEventListener('click', rG);
+        }
+        
+        // 研究相关功能
+        function sR() {
+            rsbEl.addEventListener('click', () => {
+                rs.classList.remove('hidden');
+                rme.textContent = gs.mp;
+                rceEl.textContent = gHC;
+                uRU();
+            });
+            crbEl.addEventListener('click', () => rs.classList.add('hidden'));
+            rmb.addEventListener('click', () => rU('m', false));
+            rmcb.addEventListener('click', () => rU('m', true));
+            rkb.addEventListener('click', () => rU('k', false));
+            rkcb.addEventListener('click', () => rU('k', true));
+            rcbEl.addEventListener('click', () => rU('c', false));
+            rccb.addEventListener('click', () => rU('c', true));
+            rpb.addEventListener('click', () => rU('p', false));
+            rpcb.addEventListener('click', () => rU('p', true));
+            rrb.addEventListener('click', () => {
+                rU('r', false);
+                gs.hsi = 0 + (gTRL('r') * 600);
+            });
+            rrcb.addEventListener('click', () => {
+                rU('r', true);
+                gs.hsi = 0 + (gTRL('r') * 600);
+            });
+            rlb.addEventListener('click', () => rU('l', false));
+            rlcb.addEventListener('click', () => rU('l', true));
+        }
+        
+        // 灌注相关功能
+        function sI() {
+            ib.addEventListener('click', () => {
+                is.classList.remove('hidden');
+                ibe.textContent = gHB;
+                uIU();
+            });
+            cib.addEventListener('click', () => is.classList.add('hidden'));
+            icbEl.addEventListener('click', () => inF('c'));
+            igbEl.addEventListener('click', () => inF('g'));
+            icobEl.addEventListener('click', () => inF('co'));
+            ipbEl.addEventListener('click', () => inF('p'));
+            iebEl.addEventListener('click', () => inF('e'));
+            iabEl.addEventListener('click', () => inF('a'));
+            iclbEl.addEventListener('click', () => inF('cl')); // 新增"物以类聚"
+        }
+        
+        // 执行灌注
+        function inF(t) {
+            let cost;
+            if (t === 'cl') {
+                // 物以类聚特殊费用计算
+                if (i[t] >= 12) return; // 达到上限
+                cost = Math.pow(2, i[t] + 1);
+            } else {
+                cost = (i[t] + 1) * 2;
+            }
+            
+            if (gHB >= cost) {
+                gHB -= cost;
+                i[t] += 1;
+                ibe.textContent = gHB;
+                hbe.textContent = gHB;
+                uIU();
+            }
+        }
+        
+        // 更新灌注界面
+        function uIU() {
+            icc.textContent = i.c;
+            icb.textContent = i.c;
+            iccEl.textContent = (i.c + 1) * 2;
+            sIB(icbEl, gHB >= (i.c + 1) * 2);
+            
+            igc.textContent = i.g;
+            igb.textContent = i.g * 2;
+            igcEl.textContent = (i.g + 1) * 2;
+            sIB(igbEl, gHB >= (i.g + 1) * 2);
+            
+            ico.textContent = i.co;
+            icob.textContent = i.co * 3;
+            icoEl.textContent = (i.co + 1) * 2;
+            sIB(icobEl, gHB >= (i.co + 1) * 2);
+            
+            ipc.textContent = i.p;
+            ipb.textContent = i.p * 4;
+            ipcEl.textContent = (i.p + 1) * 2;
+            sIB(ipbEl, gHB >= (i.p + 1) * 2);
+            
+            iac.textContent = i.a;
+            iab.textContent = (i.a + 1) + 'x';
+            iacEl.textContent = (i.a + 1) * 2;
+            sIB(iabEl, gHB >= (i.a + 1) * 2);
+            
+            // 物以类聚相关更新
+            iclc.textContent = i.cl;
+            const clusterRange = i.cl * 10; // 每级增加10px范围
+            iclb.textContent = clusterRange + 'px';
+            if (i.cl < 12) {
+                iclcEl.textContent = Math.pow(2, i.cl + 1);
+                sIB(iclbEl, gHB >= Math.pow(2, i.cl + 1));
+            } else {
+                iclcEl.textContent = "已上限";
+                sIB(iclbEl, false);
+            }
+            
+            iec.textContent = i.e;
+            ieb.textContent = i.e * 5 + '%';
+            iecEl.textContent = (i.e + 1) * 2;
+            sIB(iebEl, gHB >= (i.e + 1) * 2);
+        }
+        
+        // 设置按钮状态
+        function sIB(b, e) {
+            if (e) {
+                b.classList.remove('research-button-disabled');
+                b.disabled = false;
+            } else {
+                b.classList.add('research-button-disabled');
+                b.disabled = true;
+            }
+        }
+        
+        // 获取研究总等级
+        function gTRL(t) {
+            return gs.r[`${t}`] + pR[`${t}`];
+        }
+        
+        // 斐波那契数列计算
+        function f(n) {
+            if (n <= 0) return 0;
+            if (n === 1 || n === 2) return 1;
+            let a = 1, b = 1;
+            for (let i = 3; i <= n; i++) {
+                let c = a + b;
+                a = b;
+                b = c;
+            }
+            return b;
+        }
+        
+        // 研究升级
+        function rU(t, p) {
+            let cl, c;
+            if (p) {
+                cl = pR[`${t}`];
+                c = cHCC(t, cl);
+            } else {
+                cl = gs.r[`${t}`];
+                c = f(cl + 1);
+            }
+            if ((!p && gs.mp >= c) || (p && gHC >= c)) {
+                if (!p) gs.mp -= c;
+                else gHC -= c;
+                if (p) pR[`${t}`] += 1;
+                else gs.r[`${t}`] += 1;
+                uMP();
+                hce.textContent = gHC;
+                rme.textContent = gs.mp;
+                rceEl.textContent = gHC;
+                uRU();
+            }
+        }
+        
+        // 更新研究界面
+        function uRU() {
+            rml.textContent = gs.r.m;
+            rmpl.textContent = pR.m;
+            rmtl.textContent = gTRL('m');
+            rmc.textContent = f(gs.r.m + 1);
+            rmcp.textContent = cHCC('m', pR.m);
+            const mcu = gs.mp >= f(gs.r.m + 1);
+            sRBt(rmb, mcu);
+            const pmcu = gHC >= cHCC('m', pR.m);
+            sRBt(rmcb, pmcu);
+            
+            rkl.textContent = gs.r.k;
+            rkpl.textContent = pR.k;
+            rktl.textContent = gTRL('k');
+            rkc.textContent = f(gs.r.k + 1);
+            rkcp.textContent = cHCC('k', pR.k);
+            const kcu = gs.mp >= f(gs.r.k + 1);
+            sRBt(rkb, kcu);
+            const pkcu = gHC >= cHCC('k', pR.k);
+            sRBt(rkcb, pkcu);
+            
+            rcl.textContent = gs.r.c;
+            rcpl.textContent = pR.c;
+            rctl.textContent = gTRL('c');
+            rcc.textContent = f(gs.r.c + 1);
+            rccp.textContent = cHCC('c', pR.c);
+            const ccu = gs.mp >= f(gs.r.c + 1);
+            sRBt(rcbEl, ccu);
+            const pccu = gHC >= cHCC('c', pR.c);
+            sRBt(rccb, pccu);
+            
+            rpl.textContent = gs.r.p;
+            rppl.textContent = pR.p;
+            rptl.textContent = gTRL('p');
+            rpc.textContent = f(gs.r.p + 1);
+            rpcp.textContent = cHCC('p', pR.p);
+            const pcu = gs.mp >= f(gs.r.p + 1);
+            sRBt(rpb, pcu);
+            const ppcu = gHC >= cHCC('p', pR.p);
+            sRBt(rpcb, ppcu);
+            
+            rrlEl.textContent = gs.r.r;
+            rrpl.textContent = pR.r;
+            rrtl.textContent = gTRL('r');
+            rrcEl.textContent = f(gs.r.r + 1);
+            rrcp.textContent = cHCC('r', pR.r);
+            const rcu = gs.mp >= f(gs.r.r + 1);
+            sRBt(rrb, rcu);
+            const prcu = gHC >= cHCC('r', pR.r);
+            sRBt(rrcb, prcu);
+            
+            rll.textContent = gs.r.l;
+            rlpl.textContent = pR.l;
+            rltl.textContent = gTRL('l');
+            rlcEl.textContent = f(gs.r.l + 1);
+            rlcp.textContent = cHCC('l', pR.l);
+            const lcu = gs.mp >= f(gs.r.l + 1);
+            sRBt(rlb, lcu);
+            const plcu = gHC >= cHCC('l', pR.l);
+            sRBt(rlcb, plcu);
+        }
+        
+        // 设置研究按钮状态
+        function sRBt(b, e) {
+            if (e) {
+                b.classList.remove('research-button-disabled');
+                b.disabled = false;
+            } else {
+                b.classList.add('research-button-disabled');
+                b.disabled = true;
+            }
+        }
+        
+        // 游戏结束
+        function gO() {
+            gs.go = true;
+            fme.textContent = gs.tmc;
+            fpe.textContent = gs.p;
+            gos.classList.remove('hidden');
+        }
+        
+        // 胜利
+        function victory() {
+            gs.go = true;
+            vme.textContent = gs.tmc;
+            vbe.textContent = gHB;
+            vcs.classList.remove('hidden');
+        }
+        
+        // 爆炸效果 - 带连击功能
+        function sE(x, y) {
+            const now = Date.now();
+            const comboTimeWindow = 500; // 0.5秒内的爆炸算连击
+            
+            // 检查是否在连击时间窗口内
+            if (now - lastExplosionTime < comboTimeWindow) {
+                comboCount++;
+            } else {
+                comboCount = 1;
+                // 移除之前的连击计数器
+                if (comboElement && comboElement.parentNode) {
+                    comboElement.remove();
+                }
+            }
+            
+            lastExplosionTime = now;
+            
+            // 创建爆炸效果
+            const e = document.createElement('div');
+            e.className = 'explosion text-yellow-500 text-6xl';
+            e.textContent = '💥';
+            e.style.left = `${x}px`;
+            e.style.top = `${y}px`;
+            efC.appendChild(e);
+            
+            // 创建或更新连击计数器
+            if (comboCount > 1) {
+                if (comboElement && comboElement.parentNode) {
+                    comboElement.remove();
+                }
+                
+                comboElement = document.createElement('div');
+                comboElement.className = 'combo-counter';
+                comboElement.textContent = `x ${comboCount}`;
+                comboElement.style.left = `${x + 20}px`;
+                comboElement.style.top = `${y + 20}px`;
+                efC.appendChild(comboElement);
+            }
+            
+            
+            // 设置爆炸效果自动移除
+            setTimeout(() => {
+                if (e.parentNode) e.remove();
+                // 500ms后如果没有新爆炸，移除连击计数器
+                setTimeout(() => {
+                    if (Date.now() - lastExplosionTime >= comboTimeWindow && 
+                        comboElement && comboElement.parentNode) {
+                        comboElement.remove();
+                        comboElement = null;
+                    }
+                }, comboTimeWindow);
+            }, 500);
+        }
+        
+        // 番茄爆炸效果 - 带连击功能
+        function sTE(x, y) {
+            const now = Date.now();
+            const comboTimeWindow = 500; // 0.5秒内的爆炸算连击
+            
+            // 检查是否在连击时间窗口内
+            if (now - lastExplosionTime < comboTimeWindow) {
+                comboCount++;
+            } else {
+                comboCount = 1;
+                // 移除之前的连击计数器
+                if (comboElement && comboElement.parentNode) {
+                    comboElement.remove();
+                }
+            }
+            
+            lastExplosionTime = now;
+            
+            // 创建番茄爆炸效果
+            const e = document.createElement('div');
+            e.className = 'tomato-explosion text-red-600 text-6xl';
+            e.textContent = '🍅';
+            e.style.left = `${x}px`;
+            e.style.top = `${y}px`;
+            efC.appendChild(e);
+            
+            // 创建或更新连击计数器
+            if (comboCount > 1) {
+                if (comboElement && comboElement.parentNode) {
+                    comboElement.remove();
+                }
+                
+                comboElement = document.createElement('div');
+                comboElement.className = 'combo-counter';
+                comboElement.textContent = `x ${comboCount}`;
+                comboElement.style.left = `${x + 20}px`;
+                comboElement.style.top = `${y + 20}px`;
+                efC.appendChild(comboElement);
+            }
+            
+            // 设置爆炸效果自动移除
+            setTimeout(() => {
+                if (e.parentNode) e.remove();
+                // 500ms后如果没有新爆炸，移除连击计数器
+                setTimeout(() => {
+                    if (Date.now() - lastExplosionTime >= comboTimeWindow && 
+                        comboElement && comboElement.parentNode) {
+                        comboElement.remove();
+                        comboElement = null;
+                    }
+                }, comboTimeWindow);
+            }, 500);
+            
+            document.body.classList.add('screen-shake');
+            setTimeout(() => {
+                document.body.classList.remove('screen-shake');
+            }, 500);
+        }
+        
+        // 治疗效果
+        function sHE(x, y) {
+            for (let i = 0; i < 5; i++) {
+                const h = document.createElement('div');
+                h.className = 'heal-effect text-5xl';
+                h.textContent = '+';
+                h.style.left = `${x + (Math.random() * 60 - 30)}px`;
+                h.style.top = `${y + (Math.random() * 60 - 30)}px`;
+                efC.appendChild(h);
+                setTimeout(() => h.remove(), 2000);
+            }
+        }
+        
+        // 更新肉数量显示
+        function uMP() {
+            mpe.textContent = gs.mp;
+            if (gs.hem || hRWC) mc.classList.remove('hidden');
+            else mc.classList.add('hidden');
+        }
+        
+        // 创建肉块 - 带数量显示
+        function cMP(x, y, a) {
+            const meatContainer = document.createElement('div');
+            meatContainer.className = 'meat-piece';
+            meatContainer.style.left = `${x}px`;
+            meatContainer.style.top = `${y}px`;
+            
+            const meatIcon = document.createElement('span');
+            meatIcon.textContent = '🥩';
+            
+            const meatCount = document.createElement('span');
+            meatCount.className = 'meat-count';
+            meatCount.textContent = a;
+            
+            meatContainer.appendChild(meatIcon);
+            meatContainer.appendChild(meatCount);
+            mce.appendChild(meatContainer);
+            
+            const mi = `meat-${Date.now()}-${Math.random()}`;
+            const mp = { 
+                id: mi, 
+                element: meatContainer, 
+                x: x, 
+                y: y, 
+                amount: a,
+                countElement: meatCount
+            };
+            
+            meatContainer.addEventListener('click', () => clMP(mi));
+            gs.md.push(mp);
+            
+            // 检查是否可以与其他肉块合并
+            checkAndMergeMeat(mp);
+            
+            return mp;
+        }
+        
+        // 检查并合并近距离的肉块
+        function checkAndMergeMeat(newMeat) {
+            const mergeDistance = 30; // 合并距离阈值
+            const meatsToMerge = [newMeat];
+            
+            // 查找附近的肉块
+            for (let i = 0; i < gs.md.length; i++) {
+                const existingMeat = gs.md[i];
+                if (existingMeat.id === newMeat.id) continue;
+                
+                const distance = Math.sqrt(
+                    Math.pow(existingMeat.x - newMeat.x, 2) +
+                    Math.pow(existingMeat.y - newMeat.y, 2)
+                );
+                
+                if (distance < mergeDistance) {
+                    meatsToMerge.push(existingMeat);
+                }
+            }
+            
+            // 如果找到可合并的肉块
+            if (meatsToMerge.length > 1) {
+                // 计算总数量和平均位置
+                let totalAmount = 0;
+                let totalX = 0;
+                let totalY = 0;
+                
+                meatsToMerge.forEach(meat => {
+                    totalAmount += meat.amount;
+                    totalX += meat.x;
+                    totalY += meat.y;
+                });
+                
+                const avgX = totalX / meatsToMerge.length;
+                const avgY = totalY / meatsToMerge.length;
+                
+                // 移除所有要合并的肉块
+                meatsToMerge.forEach(meat => {
+                    if (meat.element && meat.element.parentNode) {
+                        meat.element.remove();
+                    }
+                    const index = gs.md.findIndex(m => m.id === meat.id);
+                    if (index !== -1) {
+                        gs.md.splice(index, 1);
+                    }
+                });
+                
+                // 创建合并后的新肉块
+                cMP(avgX, avgY, totalAmount);
+            }
+        }
+        
+        // 收集肉块
+        function clMP(mi) {
+            const i = gs.md.findIndex(m => m.id === mi);
+            if (i !== -1) {
+                const m = gs.md[i];
+                gs.mp += m.amount;
+                gs.tmc += m.amount;
+                if (m.amount > 0) gs.hem = true;
+                uMP();
+                m.element.remove();
+                gs.md.splice(i, 1);
+            }
+        }
+        
+        // 检查玩家范围内的肉块并自动收集
+        function cPM() {
+            if (gs.go) return;
+            
+            // 计算拾取范围，基础20px，每级"物以类聚"增加10px
+            const pickupRange = 20 + (i.cl * 10);
+            
+            for (let i = gs.md.length - 1; i >= 0; i--) {
+                const m = gs.md[i];
+                // 计算玩家与肉块的距离
+                const distance = Math.sqrt(
+                    Math.pow(gs.pl.x - m.x, 2) +
+                    Math.pow(gs.pl.y - m.y, 2)
+                );
+                
+                // 如果在拾取范围内，自动收集
+                if (distance < pickupRange) {
+                    clMP(m.id);
+                }
+            }
+        }
+        
+        // 设置鼠标控制
+        function sMC() {
+            document.addEventListener('mousedown', (e) => {
+                if (e.target.closest('button') || e.target.closest('#research-screen') || e.target.closest('#infuse-screen') ||
+                    e.target.closest('#game-over-screen') || e.target.closest('#reset-confirm-screen') || e.target.closest('#save-screen') || 
+                    e.target.closest('#names-screen') || e.target.closest('.meat-piece')) return;
+                if (!gs.s || gs.go) return;
+                gs.imd = true;
+                cB(e.clientX, e.clientY);
+                gs.fi = setInterval(() => {
+                    if (gs.imd && !gs.go) cB(e.clientX, e.clientY);
+                }, 200);
+            });
+            document.addEventListener('mouseup', () => {
+                gs.imd = false;
+                if (gs.fi) {
+                    clearInterval(gs.fi);
+                    gs.fi = null;
+                }
+            });
+            document.addEventListener('mouseleave', () => {
+                gs.imd = false;
+                if (gs.fi) {
+                    clearInterval(gs.fi);
+                    gs.fi = null;
+                }
+            });
+        }
+        function iP() {
+            gs.pl.x = window.innerWidth / 2;
+            gs.pl.y = window.innerHeight / 2;
+            gs.en.x = window.innerWidth * 0.8;
+            gs.en.y = window.innerHeight / 2;
+            uEP();
+        }
+        function uEP() {
+            plEl.style.left = `${gs.pl.x}px`;
+            plEl.style.top = `${gs.pl.y}px`;
+            enEl.style.left = `${gs.en.x}px`;
+            enEl.style.top = `${gs.en.y}px`;
+            gs.rb.forEach(r => {
+                if (r.element && !r.ba) {
+                    r.element.style.left = `${r.x}px`;
+                    r.element.style.top = `${r.y}px`;
+                }
+            });
+        }
+        function hPM() {
+            if (gs.go) return;
+            if (gs.k.w) gs.pl.y -= gs.pl.sp;
+            if (gs.k.s) gs.pl.y += gs.pl.sp;
+            if (gs.k.a) gs.pl.x -= gs.pl.sp;
+            if (gs.k.d) gs.pl.x += gs.pl.sp;
+            gs.pl.x = Math.max(0, Math.min(window.innerWidth - gs.pl.w, gs.pl.x));
+            gs.pl.y = Math.max(0, Math.min(window.innerHeight - gs.pl.h, gs.pl.y));
+        }
+        function hEM() {
+            if (gs.go) return;
+            const bmc = 0.02;
+            const bs = 4;
+            const mc = bmc + (gs.p - 1) * 0.005;
+            const sm = bs + (gs.p - 1) * 0.2;
+            if (Math.random() < mc) {
+                const a = Math.random() * Math.PI * 2;
+                gs.en.x += Math.cos(a) * sm;
+                gs.en.y += Math.sin(a) * sm;
+                gs.en.x = Math.max(0, Math.min(window.innerWidth - gs.en.w, gs.en.x));
+                gs.en.y = Math.max(0, Math.min(window.innerHeight - gs.en.h, gs.en.y));
+            }
+        }
+        function cR(x, y) {
+            if (gs.rb.length >= gs.rl) {
+                // 达到上限，增加防御
+                const rabbitHealthPercent = getRabbitHealthPercentage(gs.p);
+                const shieldToAdd = Math.floor(gs.en.mh * rabbitHealthPercent * 0.3);
+                gs.en.shield += shieldToAdd;
+                if (gs.en.shield > 0) {
+                    esc.classList.remove('hidden');
+                }
+                updateShieldBar();
+                return null;
+            }
+            
+            const re = document.createElement('div');
+            re.className = 'absolute text-3xl floating';
+            re.textContent = '🐇';
+            re.style.left = `${x}px`;
+            re.style.top = `${y}px`;
+            rbC.appendChild(re);
+            const rhc = document.createElement('div');
+            rhc.className = 'bg-gray-800 rounded-full p-1 shadow-lg';
+            rhc.dataset.rabbitId = Date.now();
+            const rhi = document.createElement('div');
+            rhi.className = 'h-4 bg-gray-700 rounded-full overflow-hidden';
+            const rhb = document.createElement('div');
+            rhb.className = 'health-bar h-full bg-blue-500 w-[100%]';
+            const rht = document.createElement('div');
+            rht.className = 'absolute text-white text-xs text-shadow text-center w-full -mt-6';
+            const rabbitHealthPercent = getRabbitHealthPercentage(gs.p);
+            const mh = Math.floor(gs.en.mh * rabbitHealthPercent);
+            rht.textContent = `${mh}/${mh}`;
+            rhi.appendChild(rhb);
+            rhc.appendChild(rhi);
+            rhc.appendChild(rht);
+            rbHC.appendChild(rhc);
+            const ri = `rabbit-${Date.now()}`;
+            const nr = {
+                id: ri, element: re, x: x, y: y, h: mh, mh: mh,
+                sp: 3.5 + (gs.p - 1) * 0.1, w: 30, h: 30,
+                lht: Date.now(), nhi: 5000 + Math.random() * 5000,
+                hb: rhb, ht: rht, hc: rhc,
+                ba: false
+            };
+            gs.rb.push(nr);
+            return nr;
+        }
+        function rWR() {
+            if (gs.rb.length === 0) return;
+            let wr = gs.rb[0];
+            gs.rb.forEach(r => {
+                if (!r.ba && r.h < wr.h) wr = r;
+            });
+            wr.ba = true;
+            wr.element.classList.add('fade-out');
+            setTimeout(() => {
+                if (wr.element && wr.element.parentNode) wr.element.remove();
+                if (wr.hc && wr.hc.parentNode) wr.hc.remove();
+                gs.rb = gs.rb.filter(r => r.id !== wr.id);
+            }, 2000);
+        }
+        function hRB() {
+            if (gs.rb.length === 0 || gs.go) return;
+            gs.rb.forEach(r => {
+                if (r.ba) return;
+                const mc = 0.03 + (gs.p - 1) * 0.002;
+                if (Math.random() < mc) {
+                    const r = 200 + (gs.p - 1) * 10;
+                    r.x = gs.en.x + (Math.random() * r - r/2);
+                    r.y = gs.en.y + (Math.random() * r - r/2);
+                    r.x = Math.max(0, Math.min(window.innerWidth - r.w, r.x));
+                    r.y = Math.max(0, Math.min(window.innerHeight - r.h, r.y));
+                }
+                const n = Date.now();
+                if (n - r.lht > r.nhi) {
+                    const mh = Math.floor((r.mh - r.h) / 2);
+                    if (mh > 0) {
+                        const ha = Math.floor(Math.random() * (mh + 1));
+                        if (ha > 0) {
+                            r.h += ha;
+                            uRH(r);
+                            sHE(r.x, r.y);
+                        }
+                    }
+                    r.lht = n;
+                    const bi = 5000;
+                    const pr = Math.min(3000, (gs.p - 1) * 200);
+                    r.nhi = bi - pr + Math.random() * (5000 - pr);
+                }
+            });
+        }
+        function uRH(r) {
+            if (r.ba) return;
+            const hp = (r.h / r.mh) * 100;
+            r.hb.style.width = `${hp}%`;
+            r.ht.textContent = `${r.h}/${r.mh}`;
+        }
+        function updateShieldBar() {
+            const shieldPercent = (gs.en.shield / (gs.en.mh * 0.3 * 3)) * 100; // 最大防御为3只兔神的30%血量
+            esb.style.width = `${Math.min(100, shieldPercent)}%`;
+        }
+        function uHB() {
+            const ehp = (gs.en.h / gs.en.mh) * 100;
+            ehb.style.width = `${ehp}%`;
+            eht.textContent = `${gs.en.h}/${gs.en.mh}`;
+            updateShieldBar();
+            gs.rb.forEach(r => uRH(r));
+        }
+        function sRb() {
+            if (gs.p < 2 || gs.go) return;
+            const n = Date.now();
+            const bi = gs.rSBI;
+            const si = bi + (gTRL('l') * 1000);
+            if (n - gs.lRST > si) {
+                const r = 150 + (gs.p - 2) * 10;
+                const x = gs.en.x + (Math.random() * r - r/2);
+                const y = gs.en.y + (Math.random() * r - r/2);
+                const cx = Math.max(30, Math.min(window.innerWidth - 30, x));
+                const cy = Math.max(30, Math.min(window.innerHeight - 30, y));
+                cR(cx, cy);
+                gs.lRST = n;
+            }
+        }
+        function aWR() {
+            if (gs.p < 2) return;
+            if (gs.rb.length === 0 || gs.go) return;
+            let wr = gs.rb[0];
+            gs.rb.forEach(r => {
+                if (!r.ba && r.h < wr.h) wr = r;
+            });
+            wr.ba = true;
+            gs.en.h += wr.h;
+            gs.en.h = Math.min(gs.en.h, gs.en.mh);
+            uHB();
+            wr.element.classList.add('fade-out');
+            setTimeout(() => {
+                if (wr.element && wr.element.parentNode) wr.element.remove();
+                if (wr.hc && wr.hc.parentNode) wr.hc.remove();
+                gs.rb = gs.rb.filter(r => r.id !== wr.id);
+            }, 2000);
+        }
+        function cB(mx, my) {
+            if (gs.go) return;
+            
+            const r = Math.random();
+            let t, bd, bt, bhc, mta, ty, db;
+            if (r < 0.76) {
+                t = "CF *3500";
+                bd = 1 + Math.floor(gs.p / 5);
+                bt = "CF *800";
+                bhc = 0.01;
+                mta = 4;
+                ty = "cf";
+                db = i.c;
+            } else if (r < 0.95) {
+                t = "mxt菊老";
+                bd = 2 + Math.floor(gs.p / 5);
+                bt = "马还年轻";
+                bhc = 0.02;
+                mta = 3;
+                ty = "kfc";
+                db = i.g * 2;
+            } else if (r < 0.99) {
+                t = "agc";
+                bd = 3 + Math.floor(gs.p / 5);
+                bt = "ak";
+                bhc = 0.04;
+                mta = 2;
+                ty = "cloudflare";
+                db = i.co * 3;
+            } else {
+                t = "502424";
+                bd = 4 + Math.floor(gs.p / 5);
+                bt = "510313";
+                bhc = 0.08;
+                mta = 1;
+                ty = "potion";
+                db = i.p * 4;
+            }
+            const d = bd + db;
+            let hc = bhc;
+            // 计算命中率：1 - (1 - 基础命中率) * (0.99^等级)
+            switch(ty) {
+                case "cf": 
+                    hc = 1 - (1 - 0.01) * Math.pow(0.99, gTRL('m')); 
+                    break;
+                case "kfc": 
+                    hc = 1 - (1 - 0.02) * Math.pow(0.98, gTRL('k')); 
+                    break;
+                case "cloudflare": 
+                    hc = 1 - (1 - 0.04) * Math.pow(0.96, gTRL('c')); 
+                    break;
+                case "potion": 
+                    hc = 1 - (1 - 0.08) * Math.pow(0.92, gTRL('p')); 
+                    break;
+            }
+            hc = Math.min(hc, 1);
+            const b = document.createElement('div');
+            b.className = 'absolute text-bullet font-bold text-shadow pointer-events-none';
+            b.textContent = t;
+            b.style.left = `${gs.pl.x}px`;
+            b.style.top = `${gs.pl.y}px`;
+            blC.appendChild(b);
+            const dx = mx - gs.pl.x;
+            const dy = my - gs.pl.y;
+            const di = Math.sqrt(dx * dx + dy * dy);
+            const sp = (4 + Math.min(6, gs.p * 0.2)) / 2;
+            const vx = (dx / di) * sp;
+            const vy = (dy / di) * sp;
+            gs.bl.push({
+                element: b, x: gs.pl.x, y: gs.pl.y, vx: vx, vy: vy,
+                t: t, d: d, bt: bt, hc: hc,
+                mta: mta, b: false, isTomato: false, type: ty
+            });
+        }
+        
+        function createTomato(bullet) {
+            const damageMultiplier = i.a + 1; // 过敏反应加成
+            const damage = bullet.d * 2 * damageMultiplier; // 伤害变为原来2倍
+            
+            const b = document.createElement('div');
+            b.className = 'absolute text-red-600 font-bold text-shadow pointer-events-none text-2xl';
+            b.textContent = '🍅';
+            b.style.left = `${bullet.x}px`;
+            b.style.top = `${bullet.y}px`;
+            blC.appendChild(b);
+            
+            // 沿原方向继续移动
+            const vx = bullet.vx * 1.2; // 略微加速
+            const vy = bullet.vy * 1.2;
+            
+            gs.bl.push({
+                element: b, x: bullet.x, y: bullet.y, vx: vx, vy: vy,
+                t: '🍅', d: damage, bt: '🍅', hc: 1.0,
+                mta: 3, b: true, isTomato: true, type: 'tomato'
+            });
+        }
+        
+        function uB() {
+            if (gs.go) return;
+            for (let i = gs.bl.length - 1; i >= 0; i--) {
+                const b = gs.bl[i];
+                b.x += b.vx;
+                b.y += b.vy;
+                b.element.style.left = `${b.x}px`;
+                b.element.style.top = `${b.y}px`;
+                let he = false;
+                he = cC(b, gs.en);
+                if (he) {
+                    hBH(b, i);
+                    continue;
+                }
+                if (b.x < 0 || b.x > window.innerWidth || b.y < 0 || b.y > window.innerHeight) {
+                    b.element.remove();
+                    gs.bl.splice(i, 1);
+                }
+            }
+        }
+        function cC(b, t) {
+            if (t !== gs.en) return false;
+            const sf = Math.min(6, gs.p);
+            const tw = t.w * sf;
+            const th = t.h * sf;
+            return b.x < t.x + tw && b.x + 50 > t.x && 
+                   b.y < t.y + th && b.y + 20 > t.y;
+        }
+        function hBH(b, i) {
+            if (gs.go) return;
+            
+            if (b.isTomato) {
+                b.element.remove();
+                gs.bl.splice(i, 1);
+                
+                // 番茄子弹无法被免疫
+                let damageTaken = b.d;
+                
+                // 先消耗护盾
+                if (gs.en.shield > 0) {
+                    if (gs.en.shield >= damageTaken) {
+                        gs.en.shield -= damageTaken;
+                        damageTaken = 0;
+                    } else {
+                        damageTaken -= gs.en.shield;
+                        gs.en.shield = 0;
+                    }
+                }
+                
+                // 再消耗生命值
+                if (damageTaken > 0) {
+                    gs.en.h = Math.max(0, gs.en.h - damageTaken);
+                }
+                
+                const ma = b.mta * gs.p;
+                cMP(b.x, b.y, ma);
+                sTE(b.x, b.y);
+                uHB();
+                enEl.classList.add('shake');
+                setTimeout(() => enEl.classList.remove('shake'), 500);
+                if (gs.en.h <= 0) eNP();
+                return;
+            }
+            
+            // 1%概率变成番茄子弹
+            const becomeTomato = Math.random() < 0.01;
+            if (becomeTomato) {
+                createTomato(b);
+                b.element.remove();
+                gs.bl.splice(i, 1);
+                return;
+            }
+            
+            const ih = Math.random() < b.hc;
+            if (!b.b) {
+                b.element.textContent = b.bt;
+                b.b = true;
+                b.vx = -b.vx * 0.8;
+                b.vy = -b.vy * 0.8;
+            } else {
+                b.element.remove();
+                gs.bl.splice(i, 1);
+                if (ih) {
+                    let damageTaken = b.d;
+                    let isImmune = false;
+                    
+                    // 检查免疫情况
+                    const rabbitCount = gs.rb.filter(r => !r.ba).length;
+                    if (rabbitCount >= 2 && b.type === "cf") {
+                        isImmune = true; // 2个兔神免疫第1类子弹
+                    }
+                    if (rabbitCount >= 3 && b.type === "kfc") {
+                        isImmune = true; // 3个兔神免疫第2类子弹
+                    }
+                    
+                    if (!isImmune) {
+                        // 先消耗护盾
+                        if (gs.en.shield > 0) {
+                            if (gs.en.shield >= damageTaken) {
+                                gs.en.shield -= damageTaken;
+                                damageTaken = 0;
+                            } else {
+                                damageTaken -= gs.en.shield;
+                                gs.en.shield = 0;
+                            }
+                        }
+                        
+                        // 再消耗生命值
+                        if (damageTaken > 0) {
+                            gs.en.h = Math.max(0, gs.en.h - damageTaken);
+                        }
+                    }
+                    
+                    const ma = b.mta * gs.p;
+                    cMP(b.x, b.y, ma);
+                    sE(b.x, b.y);
+                    uHB();
+                    if (!isImmune) {
+                        enEl.classList.add('shake');
+                        setTimeout(() => enEl.classList.remove('shake'), 500);
+                    }
+                    if (gs.en.h <= 0) eNP();
+                }
+            }
+        }
+        function sPT(p) {
+            const te = document.createElement('div');
+            te.className = 'phase-transition';
+            te.textContent = `阶段 ${p}`;
+            ptc.appendChild(te);
+            setTimeout(() => {
+                if (te.parentNode) te.remove();
+            }, 3000);
+        }
+        function eNP() {
+            const prevPhase = gs.p;
+            gs.p += 1;
+            
+            if (gs.p > 230) {
+                victory();
+                return;
+            }
+            
+            // 进入新阶段时删除所有兔神
+            gs.rb.forEach(r => {
+                if (r.element && r.element.parentNode) r.element.remove();
+                if (r.hc && r.hc.parentNode) r.hc.remove();
+            });
+            gs.rb = [];
+            rbHC.innerHTML = '';
+            
+            const formInfo = getFormAndMultiplier(gs.p);
+            const prevFormInfo = getFormAndMultiplier(prevPhase);
+            if (formInfo.form !== prevFormInfo.form) {
+                uFN[formInfo.form - 1] = true;
+                updateNameInputs();
+            }
+            
+            gs.rl = getRabbitLimit(gs.p);
+            updateEnemyName();
+            gs.en.mh = 100 * gs.p * formInfo.multiplier;
+            gs.en.h = gs.en.mh;
+            gs.en.shield = 0; // 新阶段重置护盾
+            gs.en.sp = 4 + (gs.p - 1) * 0.3;
+            pi.classList.remove('hidden');
+            cpe.textContent = gs.p;
+            cfe.textContent = formInfo.form;
+            rle.textContent = gs.rl;
+            if (gs.p >= 4) rbc.classList.remove('hidden');
+            enEl.className = 'absolute text-4xl floating';
+            if (gs.p <= 6) enEl.classList.add(`enemy-phase${gs.p}`);
+            else enEl.classList.add('enemy-phase-high');
+            cAR();
+            const rtc = Math.min(gs.rl, 2); // 新阶段最多召唤2个兔神
+            for (let i = 0; i < rtc; i++) {
+                const r = 150 + (gs.p - 1) * 10;
+                const x = gs.en.x + (Math.random() * r - r/2);
+                const y = gs.en.y + (Math.random() * r - r/2);
+                cR(x, y);
+            }
+            if (gs.p >= 2) rbHC.classList.remove('hidden');
+            if (gs.p >= 2) rrc.classList.remove('hidden');
+            if (gs.p >= 3) rlc.classList.remove('hidden');
+            enNE.textContent = gs.en.n;
+            uHB();
+            uEP();
+            gs.lSHT = Date.now();
+            gs.lRST = Date.now();
+            updateProgress();
+            sPT(gs.p);
+            
+            const bloodGain = formInfo.multiplier;
+            gHB += bloodGain;
+            hbe.textContent = gHB;
+        }
+        function cAR() {
+            gs.rb.forEach(r => {
+                if (r.element && r.element.parentNode) r.element.remove();
+                if (r.hc && r.hc.parentNode) r.hc.remove();
+            });
+            gs.rb = [];
+            rbHC.innerHTML = '';
+        }
+        function sH() {
+            if (gs.p < 2 || gs.rb.length === 0 || gs.go) return;
+            const n = Date.now();
+            if (gs.ish) {
+                if (n - gs.sHST > gs.hsd) {
+                    gs.ish = false;
+                }
+            } else {
+                const bi = gs.hsi;
+                const pr = Math.min(2000, (gs.p - 2) * 150);
+                const ai = bi - pr;
+                if (n - gs.lSHT > ai) {
+                    gs.ish = true;
+                    gs.sHST = n;
+                    gs.lSHT = n;
+                    let th = gs.en.h;
+                    gs.rb.forEach(r => {
+                        if (!r.ba) th += r.h;
+                    });
+                    let tmh = gs.en.mh;
+                    gs.rb.forEach(r => {
+                        if (!r.ba) tmh += r.mh;
+                    });
+                    gs.en.h = Math.round(th * (gs.en.mh / tmh));
+                    gs.rb.forEach(r => {
+                        if (!r.ba) {
+                            r.h = Math.round(th * (r.mh / tmh));
+                            r.h = Math.min(r.h, r.mh);
+                            r.h = Math.max(0, r.h);
+                            uRH(r);
+                        }
+                    });
+                    gs.en.h = Math.min(gs.en.h, gs.en.mh);
+                    gs.en.h = Math.max(0, gs.en.h);
+                    uHB();
+                    enEl.classList.add('shake');
+                    gs.rb.forEach(r => {
+                        if (!r.ba) r.element.classList.add('shake');
+                    });
+                    setTimeout(() => {
+                        enEl.classList.remove('shake');
+                        gs.rb.forEach(r => {
+                            if (!r.ba) r.element.classList.remove('shake');
+                        });
+                    }, 500);
+                }
+            }
+        }
+        function gL(t) {
+            if (!gs.s) return;
+            hPM();
+            hEM();
+            if (gs.p >= 2) {
+                hRB();
+                if (gs.p === 2) {
+                    sH();
+                    aWR();
+                } else if (gs.p >= 3) {
+                    sRb();
+                    sH();
+                }
+            }
+            cPM();
+            uB();
+            uEP();
+            if (!gs.go) requestAnimationFrame(gL);
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'w') gs.k.w = true;
+            if (e.key.toLowerCase() === 'a') gs.k.a = true;
+            if (e.key.toLowerCase() === 's') gs.k.s = true;
+            if (e.key.toLowerCase() === 'd') gs.k.d = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key.toLowerCase() === 'w') gs.k.w = false;
+            if (e.key.toLowerCase() === 'a') gs.k.a = false;
+            if (e.key.toLowerCase() === 's') gs.k.s = false;
+            if (e.key.toLowerCase() === 'd') gs.k.d = false;
+        });
+        window.addEventListener('resize', () => {
+            if (gs.s && !gs.go) {
+                gs.pl.x = Math.max(0, Math.min(window.innerWidth - gs.pl.w, gs.pl.x));
+                gs.pl.y = Math.max(0, Math.min(window.innerHeight - gs.pl.h, gs.pl.y));
+                gs.en.x = Math.max(0, Math.min(window.innerWidth - gs.en.w, gs.en.x));
+                gs.en.y = Math.max(0, Math.min(window.innerHeight - gs.en.h, gs.en.y));
+                gs.rb.forEach(r => {
+                    if (!r.ba) {
+                        r.x = Math.max(0, Math.min(window.innerWidth - r.w, r.x));
+                        r.y = Math.max(0, Math.min(window.innerHeight - r.h, r.y));
+                    }
+                });
+                uEP();
+            }
+        });
+        rb.addEventListener('click', rG);
+    </script>
+</body>
+</html>
