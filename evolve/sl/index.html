@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>evolve-sl工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .input-focus {
+                @apply focus:ring-2 focus:ring-primary/50 focus:border-primary focus:outline-none;
+            }
+            .card-shadow {
+                @apply shadow-lg hover:shadow-xl transition-shadow duration-300;
+            }
+            .result-item {
+                @apply mb-4 pb-4 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0;
+            }
+            .result-content {
+                @apply bg-white p-3 rounded text-xs break-all font-mono overflow-x-auto max-h-20;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- 标题区域 -->
+        <header class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-dark mb-2">
+                <i class="fa fa-refresh text-primary mr-2"></i>evolve-sl工具
+            </h1>
+            <p class="text-gray-600 text-lg">作者：zhenzitou</p>
+        </header>
+        
+        <!-- 主内容区 -->
+        <main class="grid md:grid-cols-12 gap-8">
+            <!-- 输入区域 -->
+            <section class="md:col-span-7 bg-white rounded-xl p-6 card-shadow">
+                <h2 class="text-xl font-semibold text-dark mb-6 flex items-center">
+                    <i class="fa fa-input-text text-primary mr-2"></i>sl设置
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- 存档输入 -->
+                    <div>
+                        <label for="archive" class="block text-gray-700 font-medium mb-2">存档</label>
+                        <textarea 
+                            id="archive" 
+                            rows="4" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all resize-none"
+                            placeholder=""  <!-- 已删除提示文本 -->
+                        ></textarea>
+                    </div>
+                    
+                    <!-- 起始种子输入 -->
+                    <div>
+                        <label for="startSeed" class="block text-gray-700 font-medium mb-2">起始种子</label>  <!-- 已删除(u) -->
+                        <input 
+                            type="number" 
+                            id="startSeed" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all"
+                            placeholder="输入起始种子数值"
+                            min="0"
+                            value="1000000"
+                        >
+                    </div>
+                    
+                    <!-- SL次数输入 -->
+                    <div>
+                        <label for="slCount" class="block text-gray-700 font-medium mb-2">SL次数</label>  <!-- 已删除(c) -->
+                        <input 
+                            type="number" 
+                            id="slCount" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg input-focus transition-all"
+                            placeholder="输入需要执行的次数"
+                            min="1"
+                            value="1"
+                        >
+                    </div>
+                    
+                    <!-- 执行按钮 -->
+                    <button 
+                        id="processBtn" 
+                        class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center"
+                    >
+                        <i class="fa fa-play-circle mr-2"></i>sl
+                    </button>
+                </div>
+            </section>
+            
+            <!-- 输出区域 -->
+            <section class="md:col-span-5 bg-white rounded-xl p-6 card-shadow">
+                <h2 class="text-xl font-semibold text-dark mb-6 flex items-center">
+                    <i class="fa fa-output text-secondary mr-2"></i>结果
+                </h2>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <div id="resultContainer" class="max-h-[500px] overflow-y-auto p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+                            <p class="text-gray-500 italic text-center py-8">处理结果将显示在这里...</p>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        id="exportAllBtn" 
+                        class="w-full bg-secondary hover:bg-secondary/90 text-white font-medium py-2 px-4 rounded-lg transition-all hidden"
+                    >
+                        <i class="fa fa-download mr-2"></i>导出所有结果
+                    </button>
+                </div>
+            </section>
+        </main>
+        
+        <!-- 页脚 -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>evolve-sl工具 &copy; 2023</p>
+        </footer>
+    </div>
+    
+    <!-- 通知组件 -->
+    <div id="notification" class="fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center">
+        <i id="notificationIcon" class="mr-2"></i>
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const archiveInput = document.getElementById('archive');
+        const startSeedInput = document.getElementById('startSeed');
+        const slCountInput = document.getElementById('slCount');
+        const processBtn = document.getElementById('processBtn');
+        const resultContainer = document.getElementById('resultContainer');
+        const exportAllBtn = document.getElementById('exportAllBtn');
+        const notification = document.getElementById('notification');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationText = document.getElementById('notificationText');
+        
+        // 存储所有结果以便导出
+        let allResults = [];
+        
+        // 显示通知
+        function showNotification(message, isSuccess = true) {
+            notificationText.textContent = message;
+            notificationIcon.className = isSuccess ? 'fa fa-check-circle text-green-500 mr-2' : 'fa fa-exclamation-circle text-red-500 mr-2';
+            notification.className = `fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-y-0 opacity-100 transition-all duration-300 flex items-center ${isSuccess ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
+            
+            setTimeout(() => {
+                notification.className = 'fixed bottom-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center';
+            }, 3000);
+        }
+        
+        // 获取当前时间，格式：年月日时分秒
+        function getCurrentTimeString() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            
+            return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        }
+        
+        // 导出所有结果为单独的文本文件
+        function exportAllResults() {
+            if (allResults.length === 0) return;
+            
+            const timeStr = getCurrentTimeString();
+            
+            // 为每个结果创建并下载一个文件
+            allResults.forEach(item => {
+                const fileName = `evolve ${timeStr} seed-${item.seed}.txt`;
+                const fileContent = item.encrypted;
+                
+                // 创建Blob对象
+                const blob = new Blob([fileContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                // 创建a标签并触发下载
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 清理
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+            
+            showNotification(`已成功导出 ${allResults.length} 个文件`);
+        }
+        
+        // 处理种子替换逻辑
+        function processSeeds() {
+            // 验证输入
+            if (!archiveInput.value.trim()) {
+                showNotification('请输入存档字符串', false);
+                archiveInput.focus();
+                return;
+            }
+            
+            if (!startSeedInput.value || isNaN(startSeedInput.value)) {
+                showNotification('请输入有效的起始种子值', false);
+                startSeedInput.focus();
+                return;
+            }
+            
+            if (!slCountInput.value || isNaN(slCountInput.value) || slCountInput.value < 1) {
+                showNotification('请输入有效的SL次数（至少1次）', false);
+                slCountInput.focus();
+                return;
+            }
+            
+            // 清空结果容器
+            resultContainer.innerHTML = '';
+            allResults = [];
+            
+            // 获取输入值
+            const encryptedA = archiveInput.value.trim();
+            let u = parseInt(startSeedInput.value, 10);
+            const c = parseInt(slCountInput.value, 10);
+            
+            // 执行c次操作
+            for (let i = 0; i < c; i++) {
+                try {
+                    // 1. 解密a得到b - 使用Base64解密
+                    const b = LZString.decompressFromBase64(encryptedA);
+                    if (!b) {
+                        throw new Error('解密失败，可能输入了无效的存档字符串或不是Base64加密格式');
+                    }
+                    
+                    // 2. 找到"seed":并替换后面的数字为u
+                    const seedRegex = /("seed":)\s*\d+/g;
+                    const modifiedB = b.replace(seedRegex, `$1${u}`);
+                    
+                    // 3. 重新加密为LZstring - 使用Base64加密
+                    const encryptedResult = LZString.compressToBase64(modifiedB);
+                    
+                    // 4. 保存结果
+                    allResults.push({
+                        seed: u,
+                        encrypted: encryptedResult
+                    });
+                    
+                    // 显示结果
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    resultItem.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium text-primary">种子: ${u}</span>
+                            <button class="copy-btn text-gray-500 hover:text-secondary text-sm" data-index="${i}">
+                                <i class="fa fa-copy"></i> 复制
+                            </button>
+                        </div>
+                        <div class="result-content">${encryptedResult}</div>
+                    `;
+                    
+                    resultContainer.appendChild(resultItem);
+                    
+                    // 为复制按钮添加事件
+                    const copyBtn = resultItem.querySelector('.copy-btn');
+                    copyBtn.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'), 10);
+                        navigator.clipboard.writeText(allResults[index].encrypted)
+                            .then(() => showNotification('已复制到剪贴板'))
+                            .catch(() => showNotification('复制失败，请手动复制', false));
+                    });
+                    
+                    // 5. u增加1
+                    u++;
+                    
+                } catch (error) {
+                    showNotification(`处理失败: ${error.message}`, false);
+                    console.error('处理错误:', error);
+                    break;
+                }
+            }
+            
+            // 如果有结果，显示导出所有按钮
+            if (allResults.length > 0) {
+                exportAllBtn.classList.remove('hidden');
+                showNotification(`成功生成 ${allResults.length} 个结果`);
+            }
+        }
+        
+        // 事件监听
+        processBtn.addEventListener('click', processSeeds);
+        exportAllBtn.addEventListener('click', exportAllResults);
+        
+        // 支持按Enter键触发处理
+        [archiveInput, startSeedInput, slCountInput].forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    processSeeds();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+    
