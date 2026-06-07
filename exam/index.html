@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间管理大师</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 开始界面 -->
+        <div class="start-screen">
+            <h1>🎮 时间管理大师</h1>
+            <p>合理安排时间，平衡学业和身心健康</p>
+            
+            <div class="difficulty-section">
+                <h3>🎚️ 选择难度</h3>
+                <div class="difficulty-info">当前: <span id="selected-difficulty">中等</span></div>
+                <div class="difficulty-grid" id="difficulty-options"></div>
+            </div>
+            
+            <div class="difficulty-section" style="margin-top: 20px;">
+                <h3>🏫 选择班级</h3>
+                <div class="difficulty-info">当前: <span id="selected-class">综合版</span></div>
+                <div class="difficulty-grid" id="class-options">
+                    <button class="difficulty-btn" data-class="science" onclick="selectClass('science')">
+                        <span class="name">理科班</span>
+                        <span class="desc">只需学习数学</span>
+                    </button>
+                    <button class="difficulty-btn" data-class="arts" onclick="selectClass('arts')">
+                        <span class="name">文科班</span>
+                        <span class="desc">学习语文、英语</span>
+                    </button>
+                    <button class="difficulty-btn active" data-class="comprehensive" onclick="selectClass('comprehensive')">
+                        <span class="name">综合版</span>
+                        <span class="desc">学习语数英（默认）</span>
+                    </button>
+                    <button class="difficulty-btn" data-class="belt" onclick="selectClass('belt')">
+                        <span class="name">一带一路班</span>
+                        <span class="desc">学习语数英+外语</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="start-buttons">
+                <button class="btn btn-primary" onclick="showGameStartOptions()">开始游戏</button>
+                <button class="btn btn-secondary" onclick="openRules()">游戏规则</button>
+                <button class="btn btn-secondary" onclick="openChangelog()">更新日志</button>
+            </div>
+        </div>
+
+        <!-- 开始游戏选项弹窗 -->
+        <div class="modal-overlay" id="start-options-modal">
+            <div class="modal-content" style="width: 400px;">
+                <h2 class="modal-title">🎮 开始游戏</h2>
+                
+                <div style="text-align: center; padding: 20px;">
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="startNewGame()">
+                        🆕 新的游戏
+                    </button>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="continueGame()">
+                        📂 继续游戏
+                    </button>
+                </div>
+                
+                <button class="modal-close" onclick="closeStartOptions()">×</button>
+            </div>
+        </div>
+
+        <!-- 规则弹窗 -->
+        <div class="modal-overlay" id="rules-modal">
+            <div class="modal-content">
+                <button class="modal-close" onclick="closeRules()">×</button>
+                <h2 class="modal-title">📖 游戏规则</h2>
+                
+                <div class="rule-section">
+                    <h3>🎯 游戏目标</h3>
+                    <p>在一学期16周内，合理分配时间完成作业、学习提升、保持身心健康，最终取得好成绩。</p>
+                </div>
+
+                <div class="rule-section">
+                    <h3>🏫 班级类型</h3>
+                    <ul>
+                        <li><strong>理科班</strong>：只需学习数学一门学科</li>
+                        <li><strong>文科班</strong>：需要学习语文、英语</li>
+                        <li><strong>综合版</strong>：需要学习语数英（默认选项）</li>
+                        <li><strong>一带一路班</strong>：需要学习语文、数学、英语、外语</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>📊 属性系统</h3>
+                    <ul>
+                        <li><strong>学科水平</strong>：根据班级类型学习不同学科（根据难度初始总和不同，范围0-100）</li>
+                        <li><strong>生理状态</strong>：范围0-50，过低会触发猝死结局</li>
+                        <li><strong>心理状态</strong>：范围0-50，过低会触发自杀结局</li>
+                        <li><strong>综合状态</strong>：影响行动成功率</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>⏰ 时间分配</h3>
+                    <p>每周根据难度有不同单位时间，可分配给以下行动：</p>
+                    <ul>
+                        <li><strong>作业</strong>：完成可提高平时成绩，成功率 = 状态/100 × √(学科水平)/10 × 难度系数</li>
+                        <li><strong>学习</strong>：提升学科水平1-5点，成功率 = 状态/200</li>
+                        <li><strong>玩耍</strong>：心理状态 ±1,3,5,7</li>
+                        <li><strong>睡觉</strong>：剩余时间自动睡觉，影响生理状态</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>💤 睡觉机制</h3>
+                    <ul>
+                        <li>睡觉时间 ≤ 0：生理状态-20</li>
+                        <li>睡觉时间 ≤ 7：生理状态减少 rand(7,10)/睡觉时间</li>
+                        <li>睡觉时间 > 7：生理状态增加 睡觉时间-7</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>📝 考试机制</h3>
+                    <ul>
+                        <li>每4周进行一次考试（第4、8、12、16周）</li>
+                        <li>考试成绩 = 学科水平 × 状态/100 ± 5分随机波动</li>
+                        <li>成绩 ≤ 40分：接下来4周总时间减少1（参加补差班）</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>📉 每周衰减</h3>
+                    <ul>
+                        <li>每周生理状态随机衰减0-2</li>
+                        <li>每周心理状态随机衰减0-2</li>
+                        <li>每周学科水平随机衰减0-2（不显示）</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>🏆 最终成绩</h3>
+                    <ul>
+                        <li>平时成绩（作业完成率）：占30%-70%随机权重</li>
+                        <li>考试成绩（4次平均分）：占剩余比例</li>
+                    </ul>
+                </div>
+
+                <div class="rule-section">
+                    <h3>⚠️ 结局条件</h3>
+                    <ul>
+                        <li>生理状态 ≤ 5 → 猝死结局</li>
+                        <li>心理状态 ≤ 5 → 自杀结局</li>
+                        <li>完成16周 → 正常结局，显示最终成绩</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 更新日志弹窗 -->
+        <div class="modal-overlay" id="changelog-modal">
+            <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+                <button class="modal-close" onclick="closeChangelog()">×</button>
+                <h2 class="modal-title">📋 更新日志</h2>
+                <div id="changelog-content"></div>
+            </div>
+        </div>
+
+        <!-- 开学介绍界面 -->
+        <div class="intro-screen">
+            <div class="intro-card">
+                <h2>🎓 新学期开始！</h2>
+                
+                <div class="intro-section">
+                    <h3>📅 本学期安排</h3>
+                    <p>欢迎来到新的学期！这学期共有 <strong>16周</strong>，每周你将拥有 <strong id="intro-weekly-time">16</strong> 单位时间 来安排学习和生活。</p>
+                    <p>合理分配时间，平衡学业和身心健康是取得好成绩的关键！</p>
+                </div>
+
+                <div class="intro-section">
+                    <h3>📊 分数分配比例</h3>
+                    <p>每门学科的最终成绩由两部分组成：</p>
+                    <div class="score-distribution">
+                        <div class="score-item">
+                            <div class="subject" id="intro-subject-0">语文</div>
+                            <div class="weight-bar">
+                                <div class="weight-item" id="intro-usual-bar-0">
+                                    <span class="label">平时</span>
+                                    <span class="value" id="intro-usual-weight-0">0%</span>
+                                </div>
+                                <div class="weight-item" id="intro-exam-bar-0">
+                                    <span class="label">考试</span>
+                                    <span class="value" id="intro-exam-weight-0">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <div class="subject" id="intro-subject-1">数学</div>
+                            <div class="weight-bar">
+                                <div class="weight-item" id="intro-usual-bar-1">
+                                    <span class="label">平时</span>
+                                    <span class="value" id="intro-usual-weight-1">0%</span>
+                                </div>
+                                <div class="weight-item" id="intro-exam-bar-1">
+                                    <span class="label">考试</span>
+                                    <span class="value" id="intro-exam-weight-1">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <div class="subject" id="intro-subject-2">英语</div>
+                            <div class="weight-bar">
+                                <div class="weight-item" id="intro-usual-bar-2">
+                                    <span class="label">平时</span>
+                                    <span class="value" id="intro-usual-weight-2">0%</span>
+                                </div>
+                                <div class="weight-item" id="intro-exam-bar-2">
+                                    <span class="label">考试</span>
+                                    <span class="value" id="intro-exam-weight-2">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="score-item" id="intro-subject-3-container" style="display: none;">
+                            <div class="subject" id="intro-subject-3">外语</div>
+                            <div class="weight-bar">
+                                <div class="weight-item" id="intro-usual-bar-3">
+                                    <span class="label">平时</span>
+                                    <span class="value" id="intro-usual-weight-3">0%</span>
+                                </div>
+                                <div class="weight-item" id="intro-exam-bar-3">
+                                    <span class="label">考试</span>
+                                    <span class="value" id="intro-exam-weight-3">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="intro-section">
+                    <h3>📝 考试时间</h3>
+                    <p>本学期共有 <strong>4次考试</strong>，分别在以下周次进行：</p>
+                    <div class="exam-schedule">
+                        <div class="exam-week">第4周</div>
+                        <div class="exam-week">第8周</div>
+                        <div class="exam-week">第12周</div>
+                        <div class="exam-week">第16周</div>
+                    </div>
+                    <p style="text-align: center; margin-top: 15px; color: #666;">⚠️ 考试成绩低于40分需要参加补差班，占用后续时间</p>
+                </div>
+
+                <div class="continue-btn">
+                    <button class="btn btn-primary" onclick="continueToGame()">开始新学期</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 游戏界面 -->
+        <div class="game-screen">
+            <!-- 游戏头部 -->
+            <div class="game-header">
+                <div class="game-header-top">
+                    <div class="week-info">📅 第 <span id="current-week">1</span> / 16 周</div>
+                    <div class="class-difficulty-info">
+                        <span id="class-display">综合版</span> | <span id="difficulty-display">中等</span>
+                    </div>
+                    <div class="time-info">
+                        <span>剩余时间:</span>
+                        <span class="remaining" id="remaining-time">16</span>
+                        <span id="time-reduction-badge" style="display: none; color: #e74c3c;">(补差班: <span id="time-reduction">0</span>)</span>
+                    </div>
+                    <div class="save-load-buttons">
+                        <button class="action-btn btn-save" onclick="saveGame()">💾 存档</button>
+                        <button class="action-btn btn-load" onclick="showLoadModal()">📂 读档</button>
+                    </div>
+                </div>
+                <div class="week-progress">
+                    <div class="progress-bar" id="week-progress"></div>
+                </div>
+            </div>
+
+            <!-- 三栏布局 -->
+            <div class="game-layout">
+                <!-- 左侧：状态面板 -->
+                <div class="status-panel">
+                    <div class="status-card">
+                        <h3>� 最近考试成绩</h3>
+                        <div class="level-item chinese">
+                            <span class="name">语文</span>
+                            <span class="value" id="chinese-exam">--</span>
+                        </div>
+                        <div class="level-item math">
+                            <span class="name">数学</span>
+                            <span class="value" id="math-exam">--</span>
+                        </div>
+                        <div class="level-item english">
+                            <span class="name">英语</span>
+                            <span class="value" id="english-exam">--</span>
+                        </div>
+                        <div class="level-item english" id="foreign-exam-container" style="display: none;">
+                            <span class="name">外语</span>
+                            <span class="value" id="foreign-exam">--</span>
+                        </div>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #555;">总成绩</span>
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #667eea;" id="total-exam">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-card">
+                        <h3>❤️ 身心状态</h3>
+                        <div class="state-item physical">
+                            <span class="name">生理状态</span>
+                            <span class="value" id="physical-state">0</span>
+                        </div>
+                        <div class="state-bar">
+                            <div class="state-bar-fill physical" id="physical-bar"></div>
+                        </div>
+                        <div class="warning-text" id="physical-warning">⚠️ 危险！状态过低</div>
+
+                        <div class="state-item mental">
+                            <span class="name">心理状态</span>
+                            <span class="value" id="mental-state">0</span>
+                        </div>
+                        <div class="state-bar">
+                            <div class="state-bar-fill mental" id="mental-bar"></div>
+                        </div>
+                        <div class="warning-text" id="mental-warning">⚠️ 危险！状态过低</div>
+
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: #555;">综合状态</span>
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #667eea;" id="total-status">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="status-card">
+                        <h3>✅ 作业完成</h3>
+                        <div class="homework-section">
+                            <div class="homework-grid">
+                                <div class="homework-item">
+                                    <div class="subject">语文</div>
+                                    <div class="count" id="chinese-homework">0/0</div>
+                                </div>
+                                <div class="homework-item">
+                                    <div class="subject">数学</div>
+                                    <div class="count" id="math-homework">0/0</div>
+                                </div>
+                                <div class="homework-item">
+                                    <div class="subject">英语</div>
+                                    <div class="count" id="english-homework">0/0</div>
+                                </div>
+                                <div class="homework-item" id="foreign-homework-container" style="display: none;">
+                                    <div class="subject">外语</div>
+                                    <div class="count" id="foreign-homework">0/0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间：行动面板 -->
+                <div class="action-panel">
+                    <div class="action-card">
+                        <div class="action-header">
+                            <h3>🎯 本周行动</h3>
+                            <button class="action-btn btn-sleep" onclick="endWeek()">
+                                <span class="icon">🌙</span>
+                                <span>睡觉并结束本周</span>
+                            </button>
+                        </div>
+                        <div class="action-filter">
+                            <button class="filter-btn active" onclick="filterActions('all')">全部</button>
+                            <button class="filter-btn" onclick="filterActions('homework')">作业</button>
+                            <button class="filter-btn" onclick="filterActions('study')">学习</button>
+                            <button class="filter-btn" onclick="filterActions('play')">玩耍</button>
+                        </div>
+                        <div class="action-grid">
+                            <button class="action-btn btn-homework" data-type="homework" id="btn-homework-chinese" onclick="doHomework(0)">
+                                <span class="icon">📝</span>
+                                <span class="homework-label">语文作业 <span class="difficulty-badge" id="chinese-difficulty">困难</span></span>
+                            </button>
+                            <button class="action-btn btn-homework" data-type="homework" id="btn-homework-math" onclick="doHomework(1)">
+                                <span class="icon">📝</span>
+                                <span class="homework-label">数学作业 <span class="difficulty-badge" id="math-difficulty">困难</span></span>
+                            </button>
+                            <button class="action-btn btn-homework" data-type="homework" id="btn-homework-english" onclick="doHomework(2)">
+                                <span class="icon">📝</span>
+                                <span class="homework-label">英语作业 <span class="difficulty-badge" id="english-difficulty">困难</span></span>
+                            </button>
+                            <button class="action-btn btn-homework" data-type="homework" id="btn-homework-foreign" onclick="doHomework(3)" style="display: none;">
+                                <span class="icon">📝</span>
+                                <span class="homework-label">外语作业 <span class="difficulty-badge" id="foreign-difficulty">困难</span></span>
+                            </button>
+                            <button class="action-btn btn-study" data-type="study" onclick="study(0)">
+                                <span class="icon">📖</span>
+                                <span>学习语文</span>
+                            </button>
+                            <button class="action-btn btn-study" data-type="study" onclick="study(1)">
+                                <span class="icon">📖</span>
+                                <span>学习数学</span>
+                            </button>
+                            <button class="action-btn btn-study" data-type="study" onclick="study(2)">
+                                <span class="icon">📖</span>
+                                <span>学习英语</span>
+                            </button>
+                            <button class="action-btn btn-study" data-type="study" onclick="study(3)" id="btn-study-foreign" style="display: none;">
+                                <span class="icon">📖</span>
+                                <span>学习外语</span>
+                            </button>
+                            <button class="action-btn btn-study" data-type="study" onclick="simulatedExam()" id="btn-simulated-exam">
+                                <span class="icon">📝</span>
+                                <span>模拟考</span>
+                            </button>
+                            <button class="action-btn btn-play" data-type="play" onclick="play()">
+                                <span class="icon">🎮</span>
+                                <span>玩耍放松</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧：消息面板 -->
+                <div class="message-panel">
+                    <div class="message-card">
+                        <h3>💬 消息记录</h3>
+                        <div class="message-list" id="message-list"></div>
+                    </div>
+
+                    <div class="message-card">
+                        <h3>⏰ 考试倒计时</h3>
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 3rem; font-weight: bold; color: #667eea; margin-bottom: 10px;">
+                                <span id="exam-countdown">3</span> 周
+                            </div>
+                            <div style="color: #666; font-size: 0.9rem;">下次考试</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 考试揭晓页面 -->
+        <div class="exam-modal" id="exam-modal">
+            <div class="modal-body" style="max-width: 600px;">
+                <h2>📊 考试成绩揭晓</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">点击对应科目揭晓成绩</p>
+                <div id="exam-results"></div>
+                <button class="restart-btn" id="continue-btn" style="width: 100%; margin-top: 20px; display: none;" onclick="closeExamModal()">继续游戏</button>
+            </div>
+        </div>
+
+        <!-- 结局弹窗 -->
+        <div class="final-modal" id="final-modal">
+            <div class="modal-body" id="final-result"></div>
+        </div>
+
+        <!-- 游戏结束弹窗 -->
+        <div class="gameover-modal" id="gameover-modal">
+            <div class="gameover-content">
+                <h2 id="gameover-title">💀</h2>
+                <p id="gameover-message"></p>
+                <button class="restart-btn" onclick="restartGame()">重新开始</button>
+            </div>
+        </div>
+
+        <!-- 补差班训导页面 -->
+        <div class="scolding-modal" id="scolding-modal">
+            <div class="scolding-content">
+                <h2 id="scolding-title">📋 教师训导</h2>
+                <div id="scolding-content"></div>
+                <button class="restart-btn" id="scolding-btn" style="width: 100%; margin-top: 20px;" onclick="continueAfterScolding()">继续</button>
+            </div>
+        </div>
+
+        <!-- 补差班页面 -->
+        <div class="remedial-modal" id="remedial-modal">
+            <div class="scolding-content">
+                <h2>📚 补差班安排</h2>
+                <div id="remedial-content"></div>
+                <button class="restart-btn" style="width: 100%; margin-top: 20px;" onclick="closeRemedialModal()">确认</button>
+            </div>
+        </div>
+
+        <!-- 读档弹窗 -->
+        <div class="scolding-modal" id="load-modal">
+            <div class="scolding-content" style="max-width: 600px;">
+                <h2>📂 选择存档</h2>
+                <div id="save-slots"></div>
+                <button class="restart-btn" style="width: 100%; margin-top: 20px;" onclick="closeLoadModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
